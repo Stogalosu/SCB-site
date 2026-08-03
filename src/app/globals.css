@@ -7,6 +7,8 @@
   --foreground: #1B2632;
   --accent: #A35139;
   --accent-border: #7D3E2C;
+  --hover-primary: #86432f;
+  --hover-secondary: #A35139;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,6 +22,8 @@
     --foreground-secondary: #93908A;
     --accent: #FFB162;
     --accent-border: #aa7641;
+    --hover-primary: #ffb972;
+    --hover-secondary: #FFB162;
   }
 }
 

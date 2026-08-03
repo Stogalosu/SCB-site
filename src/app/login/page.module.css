@@ -94,5 +94,19 @@ a.primary {
 }
 
 a.secondary {
+    color: var(--foreground);
     border-color: var(--accent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    a.primary:hover {
+        background: var(--hover-primary);
+        border-color: transparent;
+    }
+
+    a.secondary:hover {
+        color: var(--background);
+        background: var(--hover-secondary);
+        border-color: var(--accent-border);
+    }
 }
