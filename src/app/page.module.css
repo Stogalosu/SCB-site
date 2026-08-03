@@ -140,3 +140,16 @@ a.secondary {
     --button-secondary-border: #1a1a1a;
   }
 }
+
+.container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  margin-top: 70px;
+  font-family: "AnthropicSans", sans-serif;
+  color: black;
+  /*background-color: #f5ecda;*/
+  background-color: #DDDCDB;
+}

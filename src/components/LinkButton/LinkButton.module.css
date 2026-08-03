@@ -1,0 +1,13 @@
+.linkButton {
+    font-size: 20px;
+    color: #FD7B41;
+}
+
+.linkButtonSelected {
+    font-size: 20px;
+    font-weight: bold;
+    color: #3C4044;
+    text-decoration: underline;
+    text-decoration-color: #3C4044;
+    text-decoration-thickness: 3px;
+}
