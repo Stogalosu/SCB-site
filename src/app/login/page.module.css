@@ -56,6 +56,43 @@
     font-size: 14px;
 }
 
-a.primary {
+.searchInput:focus {
+    border-color: var(--accent);
+    outline: none;
+}
 
+.ctas {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+    max-width: 440px;
+    gap: 16px;
+    font-size: 14px;
+}
+
+.ctas a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 128px;
+    border: 1px solid transparent;
+    transition: 0.2s;
+    cursor: pointer;
+    width: fit-content;
+    font-weight: 500;
+}
+
+a.primary {
+    background: var(--accent);
+    color: var(--background);
+    font-weight: bold;
+    border: 2px solid var(--accent-border);
+    gap: 8px;
+}
+
+a.secondary {
+    border-color: var(--accent);
 }

@@ -11,7 +11,7 @@ export default function Login() {
             <main className={styles.main}>
                 <div className={styles.card}>
                     <div className={styles.title}>Login</div>
-                    <Spacer height={30} width={1}></Spacer>
+                    <Spacer height={30} width={1}/>
                     <Form id="login-form" action="">
                         <div className={styles.loginForm}>
                             <div className={styles.loginField}>
@@ -32,6 +32,15 @@ export default function Login() {
                             </div>
                         </div>
                     </Form>
+                    <Spacer height={30} width={1}/>
+                    <div className={styles.ctas}>
+                        <a
+                            className={styles.primary}
+                            href="/"
+                        >
+                            Sign in
+                        </a>
+                    </div>
                 </div>
             </main>
         </>
