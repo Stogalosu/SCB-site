@@ -1,0 +1,61 @@
+.main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100dvw;
+    height: calc(100dvh - 300px);
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background-color: var(--background-secondary);
+    border: 3px solid var(--border-primary);
+    border-radius: 16px;
+}
+
+.title {
+    font-size: 25px;
+    font-weight: bold;
+    color: var(--foreground);
+}
+
+.icon {
+    color: var(--foreground);
+}
+
+.loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.loginField {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+}
+
+.searchInput {
+    border: 2px var(--border-secondary) solid;
+    padding: 12px 10px;
+    color: var(--foreground);
+    font-size: 16px;
+    border-radius: 8px;
+    background: var(--background-tertiary);
+}
+
+.searchInput::placeholder {
+    color: var(--foreground-secondary);
+    font-style: italic;
+    font-weight: 300;
+    font-size: 14px;
+}
+
+a.primary {
+
+}
