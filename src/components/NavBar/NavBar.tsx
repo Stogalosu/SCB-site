@@ -21,6 +21,11 @@ export default function NavBar({ selectedPage }: { selectedPage: string }) {
                 link={"/login"}
                 selected={selectedPage === "/login"}
             />
+            <LinkButton
+                text="Sign up"
+                link={"/signup"}
+                selected={selectedPage === "/signup"}
+            />
         </div>
     );
 }

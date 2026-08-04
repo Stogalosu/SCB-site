@@ -1,0 +1,24 @@
+.main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100dvw;
+    height: calc(100dvh - 300px);
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background-color: var(--background-secondary);
+    border: 3px solid var(--border-primary);
+    border-radius: 16px;
+}
+
+.title {
+    font-size: 25px;
+    font-weight: bold;
+    color: var(--foreground);
+}
