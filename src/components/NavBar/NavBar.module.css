@@ -12,3 +12,7 @@
     font-size: 25px;
     border-bottom: 2px solid var(--border-primary);
 }
+
+.itemToEnd {
+    margin-left: auto;
+}

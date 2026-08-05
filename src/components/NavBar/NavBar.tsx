@@ -16,16 +16,14 @@ export default function NavBar({ selectedPage }: { selectedPage: string }) {
                 link="/dashboard"
                 selected={selectedPage === "/dashboard"}
             />
-            <LinkButton
-                text="Login"
-                link={"/login"}
-                selected={selectedPage === "/login"}
-            />
-            <LinkButton
-                text="Sign up"
-                link={"/signup"}
-                selected={selectedPage === "/signup"}
-            />
+            <div className={styles.itemToEnd}>
+                <LinkButton
+                    text="Login"
+                    link={"/login"}
+                    selected={selectedPage === "/login"}
+                />
+            </div>
+            <Spacer width={10} height={1}/>
         </div>
     );
 }

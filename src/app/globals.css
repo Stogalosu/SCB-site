@@ -9,6 +9,8 @@
   --accent-border: #7D3E2C;
   --hover-primary: #86432f;
   --hover-secondary: #A35139;
+
+  --navbar-height: 70px;
 }
 
 @media (prefers-color-scheme: dark) {
