@@ -14,7 +14,7 @@ export default function SignupForm() {
         const email = String(formData.get("email") ?? "");
         const password = String(formData.get("password") ?? "");
 
-        const promise = authClient.signUp.email({
+        const signupPromise = authClient.signUp.email({
             email,
             password,
             name: username,
@@ -24,14 +24,14 @@ export default function SignupForm() {
             return data;
         });
 
-        toast.promise(promise, {
+        toast.promise(signupPromise, {
             loading: "Loading...",
             success: (data) => `Success!`,
             error: (err) => `Error: ${err.message}`,
         });
 
         let redirect = true;
-        await loginPromise.catch(() => { redirect = false });
+        await signupPromise.catch(() => { redirect = false });
         if(redirect) {
             await delay(500);
             router.push("/");
