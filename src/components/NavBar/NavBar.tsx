@@ -1,6 +1,7 @@
 import LinkButton from "@/components/LinkButton/LinkButton";
 import Spacer from "@/components/Spacer";
 import styles from "./NavBar.module.css";
+import TopUserButtons from "@/components/UserButtons/UserButtons";
 
 export default function NavBar({ selectedPage }: { selectedPage: string }) {
     return (
@@ -17,11 +18,7 @@ export default function NavBar({ selectedPage }: { selectedPage: string }) {
                 selected={selectedPage === "/dashboard"}
             />
             <div className={styles.itemToEnd}>
-                <LinkButton
-                    text="Login"
-                    link={"/login"}
-                    selected={selectedPage === "/login"}
-                />
+                <TopUserButtons selectedPage={selectedPage}/>
             </div>
             <Spacer width={10} height={1}/>
         </div>
