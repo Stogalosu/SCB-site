@@ -4,10 +4,40 @@ import styles from "./LoginForm.module.css";
 import Spacer from "@/components/Spacer";
 import { Mail, KeyRound } from "lucide-react";
 import Form from "next/form";
+import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
+import { delay } from "@/app/delay";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
+    const router = useRouter();
+
     async function onLogin(formData: FormData) {
-        console.log("thios works!!");
+        const email = String(formData.get("email") ?? "");
+        const password = String(formData.get("password") ?? "");
+
+        const loginPromise = authClient.signIn.email({
+            email,
+            password,
+            rememberMe: false
+        }).then(({ data, error }) => {
+            if (error)
+                throw new Error(error.message);
+            return data;
+        })
+
+        toast.promise(loginPromise, {
+            loading: "Signing in...",
+            success: (data) => `Success!`,
+            error: (err) => `Error: ${err.message}`,
+        });
+
+        let redirect = true;
+        await loginPromise.catch(() => { redirect = false });
+        if(redirect) {
+            await delay(500);
+            router.push("/");
+        }
     }
 
     return (

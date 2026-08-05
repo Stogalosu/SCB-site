@@ -64,3 +64,9 @@ a {
     color-scheme: dark;
   }
 }
+
+[data-sonner-toast] {
+  --normal-bg: var(--background-secondary) !important;
+  --normal-border: var(--border-primary) !important;
+  --normal-text: var(--foreground) !important;
+}
