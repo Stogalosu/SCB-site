@@ -68,3 +68,9 @@
         border-color: transparent;
     }
 }
+
+.link {
+    font-size: 14px;
+    color: dodgerblue;
+    text-decoration: dodgerblue solid underline;
+}

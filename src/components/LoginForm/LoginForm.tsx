@@ -67,6 +67,10 @@ export default function LoginForm() {
                 >
                     Log in
                 </button>
+                <Spacer height={5} width={1}/>
+                <a href="/signup" className={styles.link}>
+                    Don't have an account?
+                </a>
             </div>
         </Form>
     )

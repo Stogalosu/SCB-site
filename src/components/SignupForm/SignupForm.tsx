@@ -6,6 +6,7 @@ import { Mail, KeyRound, User } from "lucide-react";
 import Form from "next/form";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { delay } from "@/app/delay";
 
 export default function SignupForm() {
     async function onSignup(formData: FormData) {
@@ -17,7 +18,6 @@ export default function SignupForm() {
             email,
             password,
             name: username,
-            callbackURL: "/"
         }).then(({ data, error }) => {
             if (error)
                 throw new Error(error.message);
@@ -29,6 +29,13 @@ export default function SignupForm() {
             success: (data) => `Success!`,
             error: (err) => `Error: ${err.message}`,
         });
+
+        let redirect = true;
+        await loginPromise.catch(() => { redirect = false });
+        if(redirect) {
+            await delay(500);
+            router.push("/");
+        }
     }
 
     return (
@@ -66,6 +73,10 @@ export default function SignupForm() {
                 >
                     Sign up!
                 </button>
+                <Spacer height={5} width={1}/>
+                <a href="/login" className={styles.link}>
+                    Already have an account?
+                </a>
             </div>
         </Form>
     )
