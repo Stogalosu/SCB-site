@@ -7,8 +7,11 @@ import Form from "next/form";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { delay } from "@/app/delay";
+import { useRouter } from "next/navigation";
 
 export default function SignupForm() {
+    const router = useRouter();
+
     async function onSignup(formData: FormData) {
         const username = String(formData.get("username") ?? "");
         const email = String(formData.get("email") ?? "");
@@ -25,8 +28,8 @@ export default function SignupForm() {
         });
 
         toast.promise(signupPromise, {
-            loading: "Loading...",
-            success: (data) => `Success!`,
+            loading: "Signing up...",
+            success: (data) => `Success! You are now logged in!`,
             error: (err) => `Error: ${err.message}`,
         });
 
