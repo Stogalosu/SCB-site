@@ -5,11 +5,30 @@ import styles from "./SignupForm.module.css";
 import { Mail, KeyRound, User } from "lucide-react";
 import Form from "next/form";
 import { toast } from "sonner";
-import { redirect } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 export default function SignupForm() {
     async function onSignup(formData: FormData) {
+        const username = String(formData.get("username") ?? "");
+        const email = String(formData.get("email") ?? "");
+        const password = String(formData.get("password") ?? "");
 
+        const promise = authClient.signUp.email({
+            email,
+            password,
+            name: username,
+            callbackURL: "/"
+        }).then(({ data, error }) => {
+            if (error)
+                throw new Error(error.message);
+            return data;
+        });
+
+        toast.promise(promise, {
+            loading: "Loading...",
+            success: (data) => `Success!`,
+            error: (err) => `Error: ${err.message}`,
+        });
     }
 
     return (
