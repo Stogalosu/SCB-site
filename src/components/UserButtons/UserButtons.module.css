@@ -5,3 +5,26 @@
     font-size: 18px;
     gap: 10px;
 }
+
+.clickable {
+    cursor: pointer;
+}
+
+.userDetContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 5px;
+}
+
+.userDetContainer > * + * {
+    border-top: 2px solid var(--border-secondary);
+    padding-top: 8px;
+}
+
+.userDet {
+    align-items: stretch;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}

@@ -6,6 +6,26 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import styles from "./UserButtons.module.css";
 import LinkButton from "@/components/LinkButton/LinkButton";
+import Popover from "@/components/Popover/Popover";
+
+function UserDetails({ session }: { session: object }) {
+    return (
+        <div className={styles.userDetContainer}>
+            <div className={styles.userDet}>
+                <span>Username</span>
+                <b>{session.user.name}</b>
+            </div>
+            <div className={styles.userDet}>
+                <span>Email</span>
+                <b>{session.user.email}</b>
+            </div>
+            <div className={styles.userDet}>
+                <span>Random stat</span>
+                <b>{Math.floor(Math.random() * 1000)}</b>
+            </div>
+        </div>
+    )
+}
 
 export default function UserButtons({ selectedPage }: { selectedPage: string }) {
     const { data: session, isPending } = authClient.useSession();
@@ -30,8 +50,13 @@ export default function UserButtons({ selectedPage }: { selectedPage: string }) 
         return (
             <div className={styles.userButtonsRow}>
                 { session.user.name }
-                <User/>
-                <LogOut onClick={onLogout}/>
+                <Popover
+                    content={<UserDetails session={session}/>}
+                    translateX="-90%"
+                >
+                    <User className={styles.clickable}/>
+                </Popover>
+                <LogOut className={styles.clickable} onClick={onLogout}/>
             </div>
         );
     else
