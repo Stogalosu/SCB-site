@@ -1,0 +1,28 @@
+.primaryButton {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 128px;
+    border: 1px solid transparent;
+    transition: 0.2s;
+    cursor: pointer;
+    width: fit-content;
+    font-weight: 500;
+
+    background: var(--accent);
+    color: var(--background);
+    font-weight: bold;
+    border: 2px solid var(--accent-border);
+    gap: 8px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .primaryButton:hover {
+        background: var(--hover-primary);
+        border-color: transparent;
+    }
+}
