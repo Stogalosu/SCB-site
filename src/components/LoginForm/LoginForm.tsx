@@ -24,11 +24,11 @@ export default function LoginForm() {
             if (error)
                 throw new Error(error.message);
             return data;
-        })
+        });
 
         toast.promise(loginPromise, {
             loading: "Signing in...",
-            success: (data) => `Success!`,
+            success: (data) => `Logged in as ${data.user.name}!`,
             error: (err) => `Error: ${err.message}`,
         });
 
