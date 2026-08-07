@@ -1,9 +1,10 @@
 .main {
     display: flex;
+    padding: calc(var(--navbar-height) + 48px) 24px 48px;
     align-items: center;
     justify-content: center;
     width: 100dvw;
-    height: calc(100dvh - var(--navbar-height));
+    min-height: calc(100dvh - var(--navbar-height));
 }
 
 .card {

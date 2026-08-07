@@ -9,7 +9,7 @@ export default function Logo({ link }: { link?: string }) {
         //     <rect width="12" height="12" x="13" y="13" fill="white" />
         //     <rect width="12" height="12" x="25" y="25" fill="white" />
         // </svg>
-        <a className={styles.svgLink} href={link ?? ""}>
+        <a className={styles.svgLink} href={link ?? "/"}>
             <svg width="40" height="40" className={styles.svgDefault}>
                 <polyline points="5,5 11,11 5,5 35,5 29,11 35,5 35,35 29,29 35,35 5,35 11,29 5,35 5,5"
                           style={{ fill: "none", stroke: "white", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }}/>
