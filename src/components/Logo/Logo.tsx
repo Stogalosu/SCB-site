@@ -12,17 +12,17 @@ export default function Logo({ link }: { link?: string }) {
         <a className={styles.svgLink} href={link ?? "/"}>
             <svg width="40" height="40" className={styles.svgDefault}>
                 <polyline points="5,5 11,11 5,5 35,5 29,11 35,5 35,35 29,29 35,35 5,35 11,29 5,35 5,5"
-                          style={{ fill: "none", stroke: "white", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }}/>
-                <rect width="18" height="18" x="11" y="11" fill="none" stroke="white" strokeWidth="2" />
-                <rect width="9" height="9" x="11" y="11" fill="white" />
-                <rect width="9" height="9" x="20" y="20" fill="white" />
+                          style={{ fill: "none",  strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }} />
+                <rect width="18" height="18" x="11" y="11" fill="none" strokeWidth="2" />
+                <rect width="9" height="9" x="11" y="11" />
+                <rect width="9" height="9" x="20" y="20" />
             </svg>
             <svg width="40" height="40" className={styles.svgHover}>
                 <polyline points="5,5 11,11 5,5 35,5 29,11 35,5 35,35 29,29 35,35 5,35 11,29 5,35 5,5"
-                          style={{ fill: "none", stroke: "white", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }}/>
-                <rect width="18" height="18" x="11" y="11" fill="none" stroke="white" strokeWidth="2" />
-                <rect width="9" height="9" x="11" y="20" fill="white" />
-                <rect width="9" height="9" x="20" y="11" fill="white" />
+                          style={{ fill: "none",  strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" }} />
+                <rect width="18" height="18" x="11" y="11" fill="none" strokeWidth="2" />
+                <rect width="9" height="9" x="11" y="20" />
+                <rect width="9" height="9" x="20" y="11" />
             </svg>
         </a>
     )

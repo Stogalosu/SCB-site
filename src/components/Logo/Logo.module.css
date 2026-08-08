@@ -13,10 +13,14 @@
 }
 
 .svgDefault {
+    stroke: var(--foreground);
+    fill: var(--foreground);
     opacity: 1;
 }
 
 .svgHover {
+    stroke: var(--foreground);
+    fill: var(--foreground);
     opacity: 0;
 }
 
