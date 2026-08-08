@@ -23,6 +23,9 @@ function UserDetails({ session }: { session: object }) {
             },
             error: (err) => `Error: ${err.message}`,
         });
+
+        await logoutPromise;
+        router.push("/");
     }
 
     return (
