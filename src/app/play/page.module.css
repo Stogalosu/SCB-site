@@ -1,0 +1,6 @@
+.main {
+    display: flex;
+    padding: calc(var(--navbar-height) + 48px) 24px 48px;
+    justify-content: center;
+    width: 100dvw;
+}

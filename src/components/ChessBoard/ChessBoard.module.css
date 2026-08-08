@@ -1,0 +1,18 @@
+.chessBoard {
+    display: grid;
+    grid-template-columns: repeat(8, 12.5%);
+    grid-template-rows: repeat(8, 12.5%);
+    width: 100%;
+    max-width: 680px;
+    aspect-ratio: 1/1;
+}
+
+.whiteSquare {
+    background: white;
+    color: black;
+}
+
+.blackSquare {
+    background: black;
+    color: white;
+}

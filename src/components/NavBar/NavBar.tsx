@@ -19,6 +19,11 @@ export default function NavBar({ selectedPage }: { selectedPage: string }) {
                 link="/dashboard"
                 selected={selectedPage === "/dashboard"}
             />
+            <LinkButton
+                text="Play"
+                link="/play"
+                selected={selectedPage === "/play"}
+            />
             <div className={styles.itemToEnd}>
                 <TopUserButtons selectedPage={selectedPage}/>
             </div>
