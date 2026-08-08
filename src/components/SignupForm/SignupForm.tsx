@@ -64,6 +64,7 @@ export default function SignupForm() {
                     <KeyRound className={styles.icon}/>
                     <input
                         name="password"
+                        type="password"
                         placeholder="Password"
                         className={styles.searchInput}
                     />
