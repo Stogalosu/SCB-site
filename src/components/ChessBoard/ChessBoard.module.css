@@ -5,14 +5,39 @@
     width: 100%;
     max-width: 680px;
     aspect-ratio: 1/1;
+    border: 3px solid black;
 }
 
 .whiteSquare {
-    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    /*background: #FFF1E2;*/
+    background: #CCC9BF;
     color: black;
 }
 
 .blackSquare {
-    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    /*background: #623F2B;*/
+    background: #7f5831;
     color: white;
+}
+
+.whitePiece {
+    width: 60%;
+    height: 60%;
+    /*color: #9F9689;*/
+    /*color: #555151;*/
+}
+
+.blackPiece {
+    width: 60%;
+    height: 60%;
+    /*color: #623F2B;*/
+    /*color: #1B2632;*/
 }
