@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { delay } from "@/app/delay";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export default function LoginForm() {
     const router = useRouter();
@@ -39,6 +41,13 @@ export default function LoginForm() {
             router.push("/");
         }
     }
+
+    const searchParams = useSearchParams();
+    useEffect(() => {
+        if (searchParams.get("error") === "unauthorized") {
+            toast.error("You need to be logged in to access this page.");
+        }
+    }, [searchParams]);
 
     return (
         <Form id="login-form" action={onLogin}>
