@@ -13,9 +13,7 @@
     justify-content: center;
     align-items: center;
     position: relative;
-    /*background: #FFF1E2;*/
     background: #CCC9BF;
-    color: black;
 }
 
 .blackSquare {
@@ -23,9 +21,23 @@
     justify-content: center;
     align-items: center;
     position: relative;
-    /*background: #623F2B;*/
     background: #7f5831;
-    color: white;
+}
+
+.highlightedBlackSquare {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background: #A35139;
+}
+
+.highlightedWhiteSquare {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background: #FFB162;
 }
 
 .whitePiece {

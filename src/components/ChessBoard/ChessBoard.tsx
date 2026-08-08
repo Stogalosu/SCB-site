@@ -16,6 +16,15 @@ export default function ChessBoard() {
         ["pB", "pB", "pB", "pB", "pB", "pB", "pB", "pB"],
         ["RB", "NB", "BB", "QB", "KB", "BB", "NB", "RB"]
     ]);
+    const [highlight, setHighlight] = useState([-1, -1]);
+
+    function onSquareClick(rowIndex: int, colIndex: int) {
+        if(board[rowIndex][colIndex] != null) {
+            if (highlight[0] != rowIndex || highlight[1] != colIndex)
+                setHighlight([rowIndex, colIndex]);
+            else setHighlight([-1, -1]);
+        } else setHighlight([-1, -1]);
+    }
 
     const icons = {
         "pW": <Image src="/images/pawn_white.svg" fill alt="white pawn" className={styles.whitePiece}/>,
@@ -39,13 +48,31 @@ export default function ChessBoard() {
                 row.map((col, colIndex) => {
                     if((rowIndex + colIndex)%2 == 0)
                         return (
-                            <div key={`${rowIndex}-${colIndex}`} className={styles.blackSquare}>
+                            <div
+                                role="button"
+                                onClick={() => onSquareClick(rowIndex, colIndex)}
+                                key={`${rowIndex}-${colIndex}`}
+                                className={
+                                    (highlight[0] == rowIndex && highlight[1] == colIndex)
+                                        ? styles.highlightedBlackSquare
+                                        : styles.blackSquare
+                                }
+                            >
                                 {icons[board[rowIndex][colIndex] ?? "null"]}
                             </div>
 
                         );
                     else return (
-                        <div key={`${rowIndex}-${colIndex}`} className={styles.whiteSquare}>
+                        <div
+                            role="button"
+                            onClick={() => onSquareClick(rowIndex, colIndex)}
+                            key={`${rowIndex}-${colIndex}`}
+                            className={
+                                (highlight[0] == rowIndex && highlight[1] == colIndex)
+                                    ? styles.highlightedWhiteSquare
+                                    : styles.whiteSquare
+                            }
+                        >
                             {icons[board[rowIndex][colIndex] ?? "null"]}
                         </div>
                     );
