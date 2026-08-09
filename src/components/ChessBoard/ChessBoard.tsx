@@ -11,11 +11,14 @@ export default function ChessBoard() {
     }
 
     const [isWhiteToMove, setWhiteToMove] = useState(true);
+    const [kings, setKings] = useState([[0, 4], [7, 4]]);
+    const [isInCheck, setCheck] = useState(null);
+    const [isCheckmate, setCheckmate] = useState(false);
     const [board, setBoard] = useState([
         ["RW", "NW", "BW", "QW", "KW", "BW", "NW", "RW"],
         ["pW", "pW", "pW", "pW", "pW", "pW", "pW", "pW"],
         [null, null, null, null, null, null, null, null],
-        [null, "KB", null, "BB", "QB", null, "RW", null],
+        [null, null, null, "BB", "QB", null, "RW", null],
         [null, null, null, null, "NW", null, null, null],
         [null, "pW", "NW", null, null, null, null, null],
         ["pB", "pB", "pB", "pB", "pB", "pB", "pB", "pB"],
@@ -70,7 +73,7 @@ export default function ChessBoard() {
         }
     }
 
-    function isKingInCheck(i: number, j: number, color: string) {
+    function isKingInCheck(i: number, j: number, color: string, check: boolean = false) {
         const opp = { "W": "B", "B": "W" };
         let movesP = [];
         if(color == "W") movesP = [[1, -1], [1, 1]];
@@ -82,34 +85,36 @@ export default function ChessBoard() {
             const ii = i+move[0], jj = j+move[1];
             if (inBounds(ii, jj))
                 if (board[ii][jj]?.startsWith("p") && board[ii][jj]?.endsWith(opp[color]))
-                    return true;
+                    return move;
         }
         for (const move of movesN) {
             const ii = i+move[0], jj = j+move[1];
             if (inBounds(ii, jj))
                 if (board[ii][jj]?.startsWith("N") && board[ii][jj]?.endsWith(opp[color]))
-                    return true;
+                    return move;
         }
         for(const move of movesBRQ) {
             let ii = i+move[0], jj = j+move[1];
             if(inBounds(ii, jj)) {
-                for (; inBounds(ii, jj) && board[ii][jj]==null; ii+=move[0], jj+=move[1]);
+                if(!check && board[ii][jj]?.startsWith("K") && board[ii][jj]?.endsWith(opp[color]))
+                    return [ii-i, jj-j];
+                for (; inBounds(ii, jj) && (board[ii][jj]==null || board[ii][jj] == "K"+color); ii+=move[0], jj+=move[1]);
                 if(inBounds(ii, jj)) {
                     const ind = movesBRQ.indexOf(move);
 
                     if (board[ii][jj]?.startsWith("Q") && board[ii][jj]?.endsWith(opp[color]))
-                        return true;
+                        return [ii-i, jj-j];
                     if(ind%2 == 0) {
                         if (board[ii][jj]?.startsWith("R") && board[ii][jj]?.endsWith(opp[color]))
-                            return true;
+                            return [ii-i, jj-j];
                     }
                     else
                         if (board[ii][jj]?.startsWith("B") && board[ii][jj]?.endsWith(opp[color]))
-                            return true;
+                            return [ii-i, jj-j];
                 }
             }
         }
-        return false;
+        return null;
     }
 
     function getPossibleMoves(i: int, j: int) {
@@ -187,10 +192,73 @@ export default function ChessBoard() {
         setDottedSquares(Array.from({ length: 8 }, () => Array(8).fill(false)));
     }
 
+    function isInCheckmate(check: number[], color: string) {
+        const opp = { "W": "B", "B": "W" };
+        let i, j;
+        if(color == "W") {
+            i = kings[0][0];
+            j = kings[0][1];
+        }
+        else {
+            i = kings[1][0];
+            j = kings[1][1];
+        }
+
+        const movesK = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
+        for(const move of movesK) {
+            const ii = i+move[0], jj = j+move[1];
+            if(inBounds(ii, jj)) {
+                if(board[ii][jj] == null) {
+                    if(!isKingInCheck(ii, jj, color))
+                        return false;
+                }
+                else if(board[ii][jj].endsWith(opp[color]))
+                    if(!isKingInCheck(ii, jj, color))
+                        return false;
+            }
+        }
+
+        const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
+        if(movesN.find(elem => elem[0]==check[0] && elem[1]==check[1])) {
+            const ii = i+check[0], jj = j+check[1];
+            if(isKingInCheck(ii, jj, opp[color], true))
+                return false;
+        } else {
+            const div = Math.max(check[0], check[1]);
+            const move = [check[0]/div, check[1]/div];
+            let ii = i+move[0], jj = j+move[1];
+            for(; ii-i<check[0] && jj-j<check[1]; ii+=move[0], jj+=move[1]) {
+                if(isKingInCheck(ii, jj, opp[color], true))
+                    return false;
+            }
+        }
+        return true;
+    }
+
     function movePiece(i1: number, j1: number, i2: number, j2: number) {
+        setCheck(null);
+
+        if(board[i1][j1] == "KW")
+            setKings([[i2, j2], kings[1]]);
+        if(board[i1][j1] == "KB")
+            setKings([kings[0], [i2, j2]]);
+
         board[i2][j2] = board[i1][j1];
         board[i1][j1] = null;
         setWhiteToMove(!isWhiteToMove);
+
+        const checkW = isKingInCheck(kings[0][0], kings[0][1], "W");
+        const checkB = isKingInCheck(kings[1][0], kings[1][1], "B");
+        if(checkW) {
+            setCheck(checkW);
+            if(isInCheckmate(checkW, "W"))
+                setCheckmate(true);
+        }
+        else if(checkB) {
+            setCheck(checkB);
+            if(isInCheckmate(checkB, "B"))
+                setCheckmate(true);
+        }
     }
 
     const icons = {
@@ -254,7 +322,13 @@ export default function ChessBoard() {
                 )}
             </div>
             <span style={{ alignSelf: "center", paddingTop: "14px", fontSize: "20px" }}>
-                <b>{ isWhiteToMove ? "White" : "Black" }</b> to move.
+                <b>
+                    { (isCheckmate && isWhiteToMove) && "CHECKMATE! BLACK WINS! "}
+                    { (isCheckmate && !isWhiteToMove) && "CHECKMATE! WHITE WINS! "}
+                    { (isInCheck && !isCheckmate) && "Check! " }
+                    { !isCheckmate && (isWhiteToMove ? "White" : "Black") }
+                </b>
+                { !isCheckmate && "to move."}
             </span>
         </>
     )
