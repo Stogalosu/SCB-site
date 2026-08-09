@@ -39,17 +39,28 @@
     position: relative;
     background: #FFB162;
 }
+.capSquare {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background: #83A44F;
+}
 
 .whitePiece {
     width: 60%;
     height: 60%;
-    /*color: #9F9689;*/
-    /*color: #555151;*/
 }
 
 .blackPiece {
     width: 60%;
     height: 60%;
-    /*color: #623F2B;*/
-    /*color: #1B2632;*/
+}
+
+.dot {
+    width: 100%;
+    height: 100%;
+    background: black;
+    opacity: 0.3;
+    clip-path: circle(20%);
 }

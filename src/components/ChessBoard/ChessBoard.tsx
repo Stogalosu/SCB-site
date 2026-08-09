@@ -20,10 +20,46 @@ export default function ChessBoard() {
 
     function onSquareClick(rowIndex: int, colIndex: int) {
         if(board[rowIndex][colIndex] != null) {
-            if (highlight[0] != rowIndex || highlight[1] != colIndex)
+            if (highlight[0] != rowIndex || highlight[1] != colIndex) {
                 setHighlight([rowIndex, colIndex]);
-            else setHighlight([-1, -1]);
-        } else setHighlight([-1, -1]);
+                getPossibleMoves(rowIndex, colIndex);
+            }
+            else {
+                setHighlight([-1, -1]);
+                resetPossibleMoves();
+            }
+        } else {
+            setHighlight([-1, -1]);
+            resetPossibleMoves();
+        }
+    }
+
+    const [dottedSquares, setDottedSquares] = useState(
+        Array.from({ length: 8 }, () => Array(8).fill(false))
+    );
+
+    function getPossibleMoves(i: int, j: int) {
+        const possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
+        const opp = { "W": "B", "B": "W" };
+
+        switch (board[i][j]) {
+            case "pW":
+                if(!board[i+1][j]) possibleMoves[i+1][j] = true;
+                if(board[i+1][j+1] != null && board[i+1][j+1]?.endsWith("B")) possibleMoves[i+1][j+1] = true;
+                if(board[i+1][j-1] != null && board[i+1][j-1]?.endsWith("B")) possibleMoves[i+1][j-1] = true;
+                break;
+            case "pB":
+                if(!board[i-1][j]) possibleMoves[i-1][j] = true;
+                if(board[i-1][j+1] != null && board[i-1][j+1]?.endsWith("W")) possibleMoves[i-1][j+1] = true;
+                if(board[i-1][j-1] != null && board[i-1][j-1]?.endsWith("W")) possibleMoves[i-1][j-1] = true;
+                break;
+        }
+
+        setDottedSquares(possibleMoves);
+    }
+
+    function resetPossibleMoves() {
+        setDottedSquares(Array.from({ length: 8 }, () => Array(8).fill(false)));
     }
 
     const icons = {
@@ -55,10 +91,13 @@ export default function ChessBoard() {
                                 className={
                                     (highlight[0] == rowIndex && highlight[1] == colIndex)
                                         ? styles.highlightedBlackSquare
-                                        : styles.blackSquare
+                                        : (dottedSquares[rowIndex][colIndex] == true && icons[board[rowIndex][colIndex] ?? "null"])
+                                            ? styles.capSquare
+                                            : styles.blackSquare
                                 }
                             >
                                 {icons[board[rowIndex][colIndex] ?? "null"]}
+                                {dottedSquares[rowIndex][colIndex] == true && <div className={styles.dot}/> }
                             </div>
 
                         );
@@ -70,10 +109,13 @@ export default function ChessBoard() {
                             className={
                                 (highlight[0] == rowIndex && highlight[1] == colIndex)
                                     ? styles.highlightedWhiteSquare
-                                    : styles.whiteSquare
+                                    : (dottedSquares[rowIndex][colIndex] == true && icons[board[rowIndex][colIndex] ?? "null"])
+                                        ? styles.capSquare
+                                        : styles.whiteSquare
                             }
                         >
                             {icons[board[rowIndex][colIndex] ?? "null"]}
+                            {dottedSquares[rowIndex][colIndex] == true && <div className={styles.dot}/>}
                         </div>
                     );
                 })
