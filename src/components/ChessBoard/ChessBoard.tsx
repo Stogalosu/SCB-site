@@ -53,6 +53,46 @@ export default function ChessBoard() {
         }
     }
 
+    function isKingInCheck(i: number, j: number, color: string) {
+        const opp = { "W": "B", "B": "W" };
+        let movesP = [];
+        if(color == "W") movesP = [[1, -1], [1, 1]];
+        else movesP = [[-1, -1], [-1, 1]];
+        const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
+        const movesBRQ = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
+
+        for (const move of movesP) {
+            const ii = i+move[0], jj = j+move[1];
+            if (0<=ii && ii<=7 && 0<=jj && jj<=7)
+                if (board[ii][jj]?.startsWith("p") && board[ii][jj]?.endsWith(opp[color]))
+                    return true;
+        }
+        for (const move of movesN) {
+            const ii = i+move[0], jj = j+move[1];
+            if (0<=ii && ii<=7 && 0<=jj && jj<=7)
+                if (board[ii][jj]?.startsWith("N") && board[ii][jj]?.endsWith(opp[color]))
+                    return true;
+        }
+        for(const move of movesBRQ) {
+            let ii = i+move[0], jj = j+move[1];
+            if(0<=ii && ii<=7 && 0<=jj && jj<=7) {
+                for (; board[ii][jj]==null && 0<=ii && ii<=7 && 0<=jj && jj<=7; ii+=move[0], jj+=move[1]);
+                const ind = movesBRQ.indexOf(move);
+
+                if (board[ii][jj]?.startsWith("Q") && board[ii][jj]?.endsWith(opp[color]))
+                    return true;
+                if(ind%2 == 0) {
+                    if (board[ii][jj]?.startsWith("R") && board[ii][jj]?.endsWith(opp[color]))
+                        return true;
+                }
+                else
+                    if (board[ii][jj]?.startsWith("B") && board[ii][jj]?.endsWith(opp[color]))
+                        return true;
+            }
+        }
+        return false;
+    }
+
     function getPossibleMoves(i: int, j: int) {
         const possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
         const opp = { "W": "B", "B": "W" };
@@ -102,6 +142,22 @@ export default function ChessBoard() {
             case "QB":
                 const movesQ = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
                 getPossiblePathBRQ(i, j, last, movesQ, possibleMoves);
+                break;
+            case "KW":
+            case "KB":
+                const movesK = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
+                for(const move of movesK) {
+                    const ii = i+move[0], jj = j+move[1];
+                    if(0<=ii && ii<=7 && 0<=jj && jj<=7) {
+                        if(board[ii][jj] == null) {
+                            if (!isKingInCheck(ii, jj, last))
+                                possibleMoves[ii][jj] = true;
+                        }
+                        else if(board[ii][jj].endsWith(opp[last]))
+                            if(!isKingInCheck(ii, jj, last))
+                                possibleMoves[ii][jj] = true;
+                    }
+                }
                 break;
         }
 
