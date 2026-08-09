@@ -10,9 +10,9 @@ export default function ChessBoard() {
         ["RW", "NW", "BW", "QW", "KW", "BW", "NW", "RW"],
         ["pW", "pW", "pW", "pW", "pW", "pW", "pW", "pW"],
         [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
+        [null, null, null, "BB", null, null, null, null],
+        [null, null, null, null, "NW", null, null, null],
+        [null, "pW", "NW", null, null, null, null, null],
         ["pB", "pB", "pB", "pB", "pB", "pB", "pB", "pB"],
         ["RB", "NB", "BB", "QB", "KB", "BB", "NB", "RB"]
     ]);
@@ -38,6 +38,21 @@ export default function ChessBoard() {
         Array.from({ length: 8 }, () => Array(8).fill(false))
     );
 
+    function getPossiblePathBRQ(i: number, j: number, last: string, moves: number[][], possibleMoves: number[][]) {
+        const opp = { "W": "B", "B": "W" };
+
+        for(const move of moves) {
+            let ii = i+move[0], jj = j+move[1];
+            if(0<=ii && ii<=7 && 0<=jj && jj<=7) {
+                for (; board[ii][jj] == null; ii += move[0], jj += move[1]) {
+                    possibleMoves[ii][jj] = true;
+                }
+                if (board[ii][jj].endsWith(opp[last]))
+                    possibleMoves[ii][jj] = true;
+            }
+        }
+    }
+
     function getPossibleMoves(i: int, j: int) {
         const possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
         const opp = { "W": "B", "B": "W" };
@@ -55,16 +70,22 @@ export default function ChessBoard() {
                 break;
             case "NW":
             case "NB":
-                const last = board[i][j].charAt(1);
-                const moves = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
-                for(const move of moves) {
+                const lastN = board[i][j].charAt(1);
+                const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
+                for(const move of movesN) {
                     const ii = i+move[0];
                     const jj = j+move[1];
                     if(0<=ii && ii<=7 && 0<=jj && jj<=7) {
                         if (board[ii][jj] == null) possibleMoves[ii][jj] = true;
-                        else if (board[ii][jj].endsWith(opp[last])) possibleMoves[ii][jj] = true;
+                        else if (board[ii][jj].endsWith(opp[lastN])) possibleMoves[ii][jj] = true;
                     }
                 }
+                break;
+            case "BW":
+            case "BB":
+                const lastB = board[i][j].charAt(1);
+                const movesB = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
+                getPossiblePathBRQ(i, j, lastB, movesB, possibleMoves);
                 break;
         }
 
