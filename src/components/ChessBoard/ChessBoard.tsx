@@ -53,6 +53,19 @@ export default function ChessBoard() {
                 if(board[i-1][j+1] != null && board[i-1][j+1]?.endsWith("W")) possibleMoves[i-1][j+1] = true;
                 if(board[i-1][j-1] != null && board[i-1][j-1]?.endsWith("W")) possibleMoves[i-1][j-1] = true;
                 break;
+            case "NW":
+            case "NB":
+                const last = board[i][j].charAt(1);
+                const moves = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
+                for(const move of moves) {
+                    const ii = i+move[0];
+                    const jj = j+move[1];
+                    if(0<=ii && ii<=7 && 0<=jj && jj<=7) {
+                        if (board[ii][jj] == null) possibleMoves[ii][jj] = true;
+                        else if (board[ii][jj].endsWith(opp[last])) possibleMoves[ii][jj] = true;
+                    }
+                }
+                break;
         }
 
         setDottedSquares(possibleMoves);
