@@ -6,6 +6,10 @@ import { ChessPawn, ChessBishop, ChessKnight, ChessRook, ChessQueen, ChessKing }
 import Image from "next/image";
 
 export default function ChessBoard() {
+    function inBounds(i: number, j: number) {
+        return 0<=i && i<=7 && 0<=j && j<=7
+    }
+    
     const [board, setBoard] = useState([
         ["RW", "NW", "BW", "QW", "KW", "BW", "NW", "RW"],
         ["pW", "pW", "pW", "pW", "pW", "pW", "pW", "pW"],
@@ -21,14 +25,22 @@ export default function ChessBoard() {
     function onSquareClick(rowIndex: int, colIndex: int) {
         if(board[rowIndex][colIndex] != null) {
             if (highlight[0] != rowIndex || highlight[1] != colIndex) {
-                setHighlight([rowIndex, colIndex]);
-                getPossibleMoves(rowIndex, colIndex);
+                if(dottedSquares[rowIndex][colIndex] == true) {
+                    movePiece(highlight[0], highlight[1], rowIndex, colIndex);
+                    setHighlight([-1, -1]);
+                    resetPossibleMoves();
+                } else {
+                    setHighlight([rowIndex, colIndex]);
+                    getPossibleMoves(rowIndex, colIndex);
+                }
             }
             else {
                 setHighlight([-1, -1]);
                 resetPossibleMoves();
             }
         } else {
+            if(dottedSquares[rowIndex][colIndex] == true)
+                movePiece(highlight[0], highlight[1], rowIndex, colIndex);
             setHighlight([-1, -1]);
             resetPossibleMoves();
         }
@@ -43,12 +55,13 @@ export default function ChessBoard() {
 
         for(const move of moves) {
             let ii = i+move[0], jj = j+move[1];
-            if(0<=ii && ii<=7 && 0<=jj && jj<=7) {
-                for (; board[ii][jj] == null && 0 <= ii && ii <= 7 && 0 <= jj && jj <= 7; ii += move[0], jj += move[1]) {
+            if(inBounds(ii, jj)) {
+                for (; inBounds(ii, jj) && board[ii][jj] == null; ii += move[0], jj += move[1]) {
                     possibleMoves[ii][jj] = true;
                 }
-                if (board[ii][jj]?.endsWith(opp[last]))
-                    possibleMoves[ii][jj] = true;
+                if(inBounds(ii, jj))
+                    if (board[ii][jj]?.endsWith(opp[last]))
+                        possibleMoves[ii][jj] = true;
             }
         }
     }
@@ -63,31 +76,33 @@ export default function ChessBoard() {
 
         for (const move of movesP) {
             const ii = i+move[0], jj = j+move[1];
-            if (0<=ii && ii<=7 && 0<=jj && jj<=7)
+            if (inBounds(ii, jj))
                 if (board[ii][jj]?.startsWith("p") && board[ii][jj]?.endsWith(opp[color]))
                     return true;
         }
         for (const move of movesN) {
             const ii = i+move[0], jj = j+move[1];
-            if (0<=ii && ii<=7 && 0<=jj && jj<=7)
+            if (inBounds(ii, jj))
                 if (board[ii][jj]?.startsWith("N") && board[ii][jj]?.endsWith(opp[color]))
                     return true;
         }
         for(const move of movesBRQ) {
             let ii = i+move[0], jj = j+move[1];
-            if(0<=ii && ii<=7 && 0<=jj && jj<=7) {
-                for (; board[ii][jj]==null && 0<=ii && ii<=7 && 0<=jj && jj<=7; ii+=move[0], jj+=move[1]);
-                const ind = movesBRQ.indexOf(move);
+            if(inBounds(ii, jj)) {
+                for (; inBounds(ii, jj) && board[ii][jj]==null; ii+=move[0], jj+=move[1]);
+                if(inBounds(ii, jj)) {
+                    const ind = movesBRQ.indexOf(move);
 
-                if (board[ii][jj]?.startsWith("Q") && board[ii][jj]?.endsWith(opp[color]))
-                    return true;
-                if(ind%2 == 0) {
-                    if (board[ii][jj]?.startsWith("R") && board[ii][jj]?.endsWith(opp[color]))
+                    if (board[ii][jj]?.startsWith("Q") && board[ii][jj]?.endsWith(opp[color]))
                         return true;
+                    if(ind%2 == 0) {
+                        if (board[ii][jj]?.startsWith("R") && board[ii][jj]?.endsWith(opp[color]))
+                            return true;
+                    }
+                    else
+                        if (board[ii][jj]?.startsWith("B") && board[ii][jj]?.endsWith(opp[color]))
+                            return true;
                 }
-                else
-                    if (board[ii][jj]?.startsWith("B") && board[ii][jj]?.endsWith(opp[color]))
-                        return true;
             }
         }
         return false;
@@ -122,7 +137,7 @@ export default function ChessBoard() {
                 const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
                 for(const move of movesN) {
                     const ii = i+move[0], jj = j+move[1];
-                    if(0<=ii && ii<=7 && 0<=jj && jj<=7) {
+                    if(inBounds(ii, jj)) {
                         if (board[ii][jj] == null) possibleMoves[ii][jj] = true;
                         else if (board[ii][jj].endsWith(opp[last])) possibleMoves[ii][jj] = true;
                     }
@@ -148,7 +163,7 @@ export default function ChessBoard() {
                 const movesK = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
                 for(const move of movesK) {
                     const ii = i+move[0], jj = j+move[1];
-                    if(0<=ii && ii<=7 && 0<=jj && jj<=7) {
+                    if(inBounds(ii, jj)) {
                         if(board[ii][jj] == null) {
                             if (!isKingInCheck(ii, jj, last))
                                 possibleMoves[ii][jj] = true;
@@ -166,6 +181,11 @@ export default function ChessBoard() {
 
     function resetPossibleMoves() {
         setDottedSquares(Array.from({ length: 8 }, () => Array(8).fill(false)));
+    }
+
+    function movePiece(i1: number, j1: number, i2: number, j2: number) {
+        board[i2][j2] = board[i1][j1];
+        board[i1][j1] = null;
     }
 
     const icons = {
