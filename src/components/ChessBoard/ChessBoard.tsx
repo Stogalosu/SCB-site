@@ -10,7 +10,7 @@ export default function ChessBoard() {
         ["RW", "NW", "BW", "QW", "KW", "BW", "NW", "RW"],
         ["pW", "pW", "pW", "pW", "pW", "pW", "pW", "pW"],
         [null, null, null, null, null, null, null, null],
-        [null, null, null, "BB", null, null, null, null],
+        [null, null, null, "BB", "QB", null, "RW", null],
         [null, null, null, null, "NW", null, null, null],
         [null, "pW", "NW", null, null, null, null, null],
         ["pB", "pB", "pB", "pB", "pB", "pB", "pB", "pB"],
@@ -44,10 +44,10 @@ export default function ChessBoard() {
         for(const move of moves) {
             let ii = i+move[0], jj = j+move[1];
             if(0<=ii && ii<=7 && 0<=jj && jj<=7) {
-                for (; board[ii][jj] == null; ii += move[0], jj += move[1]) {
+                for (; board[ii][jj] == null && 0 <= ii && ii <= 7 && 0 <= jj && jj <= 7; ii += move[0], jj += move[1]) {
                     possibleMoves[ii][jj] = true;
                 }
-                if (board[ii][jj].endsWith(opp[last]))
+                if (board[ii][jj]?.endsWith(opp[last]))
                     possibleMoves[ii][jj] = true;
             }
         }
@@ -86,6 +86,18 @@ export default function ChessBoard() {
                 const lastB = board[i][j].charAt(1);
                 const movesB = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
                 getPossiblePathBRQ(i, j, lastB, movesB, possibleMoves);
+                break;
+            case "RW":
+            case "RB":
+                const lastR = board[i][j].charAt(1);
+                const movesR = [[-1, 0], [0, 1], [1, 0], [0, -1]];
+                getPossiblePathBRQ(i, j, lastR, movesR, possibleMoves);
+                break;
+            case "QW":
+            case "QB":
+                const lastQ = board[i][j].charAt(1);
+                const movesQ = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
+                getPossiblePathBRQ(i, j, lastQ, movesQ, possibleMoves);
                 break;
         }
 
