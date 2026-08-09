@@ -9,7 +9,8 @@ export default function ChessBoard() {
     function inBounds(i: number, j: number) {
         return 0<=i && i<=7 && 0<=j && j<=7
     }
-    
+
+    const [isWhiteToMove, setWhiteToMove] = useState(true);
     const [board, setBoard] = useState([
         ["RW", "NW", "BW", "QW", "KW", "BW", "NW", "RW"],
         ["pW", "pW", "pW", "pW", "pW", "pW", "pW", "pW"],
@@ -29,9 +30,12 @@ export default function ChessBoard() {
                     movePiece(highlight[0], highlight[1], rowIndex, colIndex);
                     setHighlight([-1, -1]);
                     resetPossibleMoves();
-                } else {
+                } else if (board[rowIndex][colIndex].endsWith("W") == isWhiteToMove) {
                     setHighlight([rowIndex, colIndex]);
                     getPossibleMoves(rowIndex, colIndex);
+                } else {
+                    setHighlight([-1, -1]);
+                    resetPossibleMoves();
                 }
             }
             else {
@@ -186,6 +190,7 @@ export default function ChessBoard() {
     function movePiece(i1: number, j1: number, i2: number, j2: number) {
         board[i2][j2] = board[i1][j1];
         board[i1][j1] = null;
+        setWhiteToMove(!isWhiteToMove);
     }
 
     const icons = {
@@ -205,47 +210,52 @@ export default function ChessBoard() {
     }
 
     return (
-        <div className={styles.chessBoard}>
-            {board.map((row, rowIndex) =>
-                row.map((col, colIndex) => {
-                    if((rowIndex + colIndex)%2 == 0)
-                        return (
+        <>
+            <div className={styles.chessBoard}>
+                {board.map((row, rowIndex) =>
+                    row.map((col, colIndex) => {
+                        if((rowIndex + colIndex)%2 == 0)
+                            return (
+                                <div
+                                    role="button"
+                                    onClick={() => onSquareClick(rowIndex, colIndex)}
+                                    key={`${rowIndex}-${colIndex}`}
+                                    className={
+                                        (highlight[0] == rowIndex && highlight[1] == colIndex)
+                                            ? styles.highlightedBlackSquare
+                                            : (dottedSquares[rowIndex][colIndex] == true && icons[board[rowIndex][colIndex] ?? "null"])
+                                                ? styles.capSquare
+                                                : styles.blackSquare
+                                    }
+                                >
+                                    {icons[board[rowIndex][colIndex] ?? "null"]}
+                                    {dottedSquares[rowIndex][colIndex] == true && <div className={styles.dot}/> }
+                                </div>
+
+                            );
+                        else return (
                             <div
                                 role="button"
                                 onClick={() => onSquareClick(rowIndex, colIndex)}
                                 key={`${rowIndex}-${colIndex}`}
                                 className={
                                     (highlight[0] == rowIndex && highlight[1] == colIndex)
-                                        ? styles.highlightedBlackSquare
+                                        ? styles.highlightedWhiteSquare
                                         : (dottedSquares[rowIndex][colIndex] == true && icons[board[rowIndex][colIndex] ?? "null"])
                                             ? styles.capSquare
-                                            : styles.blackSquare
+                                            : styles.whiteSquare
                                 }
                             >
                                 {icons[board[rowIndex][colIndex] ?? "null"]}
-                                {dottedSquares[rowIndex][colIndex] == true && <div className={styles.dot}/> }
+                                {dottedSquares[rowIndex][colIndex] == true && <div className={styles.dot}/>}
                             </div>
-
                         );
-                    else return (
-                        <div
-                            role="button"
-                            onClick={() => onSquareClick(rowIndex, colIndex)}
-                            key={`${rowIndex}-${colIndex}`}
-                            className={
-                                (highlight[0] == rowIndex && highlight[1] == colIndex)
-                                    ? styles.highlightedWhiteSquare
-                                    : (dottedSquares[rowIndex][colIndex] == true && icons[board[rowIndex][colIndex] ?? "null"])
-                                        ? styles.capSquare
-                                        : styles.whiteSquare
-                            }
-                        >
-                            {icons[board[rowIndex][colIndex] ?? "null"]}
-                            {dottedSquares[rowIndex][colIndex] == true && <div className={styles.dot}/>}
-                        </div>
-                    );
-                })
-            )}
-        </div>
+                    })
+                )}
+            </div>
+            <span style={{ alignSelf: "center", paddingTop: "14px", fontSize: "20px" }}>
+                <b>{ isWhiteToMove ? "White" : "Black" }</b> to move.
+            </span>
+        </>
     )
 }
