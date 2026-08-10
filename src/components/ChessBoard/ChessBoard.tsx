@@ -10,6 +10,17 @@ export default function ChessBoard() {
         return 0<=i && i<=7 && 0<=j && j<=7
     }
 
+    function isInBetween(kingI: number, kingJ: number, sqI: number, sqJ: number, attI: number, attJ: number) {
+        const collinear = (sqJ - kingJ) * (attI - kingI) == (attJ - kingJ) * (sqI - kingI);
+        const between =
+            Math.min(kingI, attI) <= sqI &&
+            sqI <= Math.max(kingI, attI) &&
+            Math.min(kingJ, attJ) <= sqJ &&
+            sqJ <= Math.max(kingJ, attJ);
+
+        return collinear && between;
+    }
+
     const [isWhiteToMove, setWhiteToMove] = useState(true);
     const [kings, setKings] = useState([[0, 4], [7, 4]]);
     const [isInCheck, setCheck] = useState(null);
@@ -118,7 +129,7 @@ export default function ChessBoard() {
     }
 
     function getPossibleMoves(i: int, j: int) {
-        const possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
+        let possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
         const opp = { "W": "B", "B": "W" };
         const last = board[i][j].charAt(1);
 
@@ -185,6 +196,30 @@ export default function ChessBoard() {
                 break;
         }
 
+        //Blocking check (if the piece is not a king)
+        if(isInCheck && board[i][j] != "KW" && board[i][j] != "KB") {
+            let king = [];
+            if(last == "W")  king = kings[0];
+            else king = kings[1];
+            const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
+            if(!movesN.find(elem => elem[0]==isInCheck[0] && elem[1]==isInCheck[1])) { //You cannot block a check from a knight
+                for(let i=0; i<=7; i++) {
+                    for(let j=0; j<=7; j++) {
+                        if(possibleMoves[i][j] != false && !isInBetween(king[0], king[1], i, j, king[0] + isInCheck[0], king[1] + isInCheck[1]))
+                            possibleMoves[i][j] = false;
+                    }
+                }
+            } else {
+                // If check is from knight
+                const ii = king[0] + isInCheck[0], jj = king[1] + isInCheck[1]
+                if(possibleMoves[ii][jj] == true) {
+                    //If you can capture the knight, that is the only possible move
+                    possibleMoves = Array.from({length: 8}, () => Array(8).fill(false));
+                    possibleMoves[ii][jj] = true;
+                } else //If you can't, you can't move!
+                    possibleMoves = Array.from({length: 8}, () => Array(8).fill(false));
+            }
+        }
         setDottedSquares(possibleMoves);
     }
 
@@ -227,7 +262,7 @@ export default function ChessBoard() {
             const div = Math.max(check[0], check[1]);
             const move = [check[0]/div, check[1]/div];
             let ii = i+move[0], jj = j+move[1];
-            for(; ii-i<check[0] && jj-j<check[1]; ii+=move[0], jj+=move[1]) {
+            for(; ii-i<=check[0] && jj-j<=check[1]; ii+=move[0], jj+=move[1]) {
                 if(isKingInCheck(ii, jj, opp[color], true))
                     return false;
             }
@@ -238,17 +273,21 @@ export default function ChessBoard() {
     function movePiece(i1: number, j1: number, i2: number, j2: number) {
         setCheck(null);
 
+        let newKings = kings;
         if(board[i1][j1] == "KW")
-            setKings([[i2, j2], kings[1]]);
+            newKings = [[i2, j2], kings[1]];
         if(board[i1][j1] == "KB")
-            setKings([kings[0], [i2, j2]]);
+            newKings = [kings[0], [i2, j2]];
+        setKings(newKings);
 
-        board[i2][j2] = board[i1][j1];
-        board[i1][j1] = null;
+        let newBoard = board;
+        newBoard[i2][j2] = newBoard[i1][j1];
+        newBoard[i1][j1] = null;
+        setBoard(newBoard);
         setWhiteToMove(!isWhiteToMove);
 
-        const checkW = isKingInCheck(kings[0][0], kings[0][1], "W");
-        const checkB = isKingInCheck(kings[1][0], kings[1][1], "B");
+        const checkW = isKingInCheck(newKings[0][0], newKings[0][1], "W");
+        const checkB = isKingInCheck(newKings[1][0], newKings[1][1], "B");
         if(checkW) {
             setCheck(checkW);
             if(isInCheckmate(checkW, "W"))
