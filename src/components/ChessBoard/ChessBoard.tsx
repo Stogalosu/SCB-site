@@ -29,9 +29,9 @@ export default function ChessBoard() {
         ["RW", "NW", "BW", "QW", "KW", "BW", "NW", "RW"],
         ["pW", "pW", "pW", "pW", "pW", "pW", "pW", "pW"],
         [null, null, null, null, null, null, null, null],
-        [null, null, null, "BB", "QB", null, "RW", null],
-        [null, null, null, null, "NW", null, null, null],
-        [null, "pW", "NW", null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
         ["pB", "pB", "pB", "pB", "pB", "pB", "pB", "pB"],
         ["RB", "NB", "BB", "QB", "KB", "BB", "NB", "RB"]
     ]);
@@ -371,7 +371,7 @@ export default function ChessBoard() {
                     { (isInCheck && !isCheckmate) && "Check! " }
                     { !isCheckmate && (isWhiteToMove ? "White" : "Black") }
                 </b>
-                { !isCheckmate && "to move."}
+                { !isCheckmate && " to move."}
             </span>
         </>
     )
