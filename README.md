@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smart Chess Board Website
 
-## Getting Started
+## What is this?
+A website I want to integrate with my smart chess board. For now, I've coded the chess interface and logic, as I'm still learning how to build websites. You can log in to see the dashboard (which does nothing) or play chess.
 
-First, run the development server:
+## Why?
+I recently build a smart chess board that can move the pieces and I thought I should make a website that can control it. I also wanted to learn how to build a website.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Hosting it locally
+To host the website yourself, clone the repo. Then, create a file named ".env" in the project's root folder and paste these lines while replacing the values accordingly:
+```
+DATABASE_URL="[your_postgress_database_url]"
+BETTER_AUTH_SECRET=[your_randomly_generated_secret]
+BETTER_AUTH_URL=http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+After that, install pnpm and run the following command to install all dependencies:
+```
+pnpm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To start the server, run:
+```
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Demo
+You can test the website here:
+http://stecker.ddns.net:3001
 
-## Learn More
+## AI Usage
+I used AI for debugging and for writing a function that checks whether a chess piece is on the line between two other pieces.
 
-To learn more about Next.js, take a look at the following resources:
+## Screenshots
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
