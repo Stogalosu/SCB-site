@@ -281,7 +281,11 @@ export default function ChessBoard() {
         setKings(newKings);
 
         let newBoard = board;
-        newBoard[i2][j2] = newBoard[i1][j1];
+        if(board[i1][j1] == "pW" && i2 == 7)
+            newBoard[i2][j2] = "QW";
+        else if(board[i1][j1] == "pB" && i2 == 0)
+            newBoard[i2][j2] = "QB";
+        else newBoard[i2][j2] = newBoard[i1][j1];
         newBoard[i1][j1] = null;
         setBoard(newBoard);
         setWhiteToMove(!isWhiteToMove);
