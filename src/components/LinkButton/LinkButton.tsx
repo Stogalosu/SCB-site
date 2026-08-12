@@ -1,16 +1,16 @@
 import styles from "./LinkButton.module.css";
+import type { DetailedHTMLProps, HTMLAttributes } from "react";
 
 export default function LinkButton(
     { text, link, selected, ...props }:
         { text: string, link: string, selected: boolean }
-        & DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement>
 ) {
     if (selected)
         return (
-            <a className={styles.linkButtonSelected} {...props} href={link}>{text}</a>
+            <a className={styles.linkButtonSelected} href={link}>{text}</a>
         );
     else
         return (
-            <a className={styles.linkButton} {...props} href={link}>{text}</a>
+            <a className={styles.linkButton} href={link}>{text}</a>
         );
 }

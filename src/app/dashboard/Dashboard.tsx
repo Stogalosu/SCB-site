@@ -4,7 +4,13 @@ import styles from "./page.module.css";
 import NavBar from "@/components/NavBar/NavBar";
 import { toast } from "sonner";
 
-export default function Dashboard({ session }: { session: object }) {
+type Session = {
+    user: {
+        name?: string | null;
+    };
+};
+
+export default function Dashboard({ session }: { session: Session }) {
     return (
         <>
             <NavBar selectedPage="/dashboard"/>

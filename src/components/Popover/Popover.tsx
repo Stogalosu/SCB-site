@@ -1,29 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from "./Popover.module.css";
 
-export default function Popover({ children, content, translateX = "-50%" }: { children: React.ReactElement, content: React.ReactNode }) {
+export default function Popover({ children, content, translateX = "-50%" }: { children: React.ReactElement, content: React.ReactNode, translateX?: string }) {
     const [isVisible, setIsVisible] = useState(false);
-    const popoverRef = useRef(null);
-    const triggerRef = useRef(null);
-
-    function toggleVisibility() {
-        setIsVisible(!isVisible);
-    };
-
-    const trigger = React.cloneElement(children, {
-        ref: triggerRef,
-        onClick: (e) => {
-            children.props.onClick?.(e);
-            toggleVisibility();
-        }
-    });
+    const popoverRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
+        const handleClickOutside = (event:MouseEvent) => {
+            const target = event.target as Node;
             if (
                 popoverRef.current &&
-                !popoverRef.current.contains(event.target) &&
-                !triggerRef.current.contains(event.target)
+                !popoverRef.current?.contains(target) &&
+                !triggerRef.current?.contains(target)
             ) {
                 setIsVisible(false);
             }
@@ -37,7 +26,12 @@ export default function Popover({ children, content, translateX = "-50%" }: { ch
 
     return (
         <div className={styles.popoverContainer}>
-            {trigger}
+            <div
+                ref={triggerRef}
+                onClick={() => setIsVisible(prev => !prev)}
+            >
+                {children}
+            </div>
 
             {isVisible && (
                 <div

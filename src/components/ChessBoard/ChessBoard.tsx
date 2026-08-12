@@ -4,6 +4,16 @@ import styles from "./ChessBoard.module.css";
 import { useState } from "react";
 import { ChessPawn, ChessBishop, ChessKnight, ChessRook, ChessQueen, ChessKing } from "lucide-react";
 import Image from "next/image";
+import type { DetailedHTMLProps, HTMLAttributes } from "react";
+
+type Color = "W" | "B";
+function opp(color: Color): Color {
+    return color === "W" ? "B" : "W";
+}
+
+type Piece =
+    | "pW" | "BW" | "NW" | "RW" | "QW" | "KW"
+    | "pB" | "BB" | "NB" | "RB" | "QB" | "KB";
 
 export default function ChessBoard() {
     function inBounds(i: number, j: number) {
@@ -23,9 +33,9 @@ export default function ChessBoard() {
 
     const [isWhiteToMove, setWhiteToMove] = useState(true);
     const [kings, setKings] = useState([[0, 4], [7, 4]]);
-    const [isInCheck, setCheck] = useState(null);
+    const [isInCheck, setCheck] = useState<number[] | null>(null);
     const [isCheckmate, setCheckmate] = useState(false);
-    const [board, setBoard] = useState([
+    const [board, setBoard] = useState<(Piece | null)[][]>([
         ["RW", "NW", "BW", "QW", "KW", "BW", "NW", "RW"],
         ["pW", "pW", "pW", "pW", "pW", "pW", "pW", "pW"],
         [null, null, null, null, null, null, null, null],
@@ -37,7 +47,7 @@ export default function ChessBoard() {
     ]);
     const [highlight, setHighlight] = useState([-1, -1]);
 
-    function onSquareClick(rowIndex: int, colIndex: int) {
+    function onSquareClick(rowIndex: number, colIndex: number) {
         if(board[rowIndex][colIndex] != null) {
             if (highlight[0] != rowIndex || highlight[1] != colIndex) {
                 if(dottedSquares[rowIndex][colIndex] == true) {
@@ -68,9 +78,7 @@ export default function ChessBoard() {
         Array.from({ length: 8 }, () => Array(8).fill(false))
     );
 
-    function getPossiblePathBRQ(i: number, j: number, last: string, moves: number[][], possibleMoves: number[][]) {
-        const opp = { "W": "B", "B": "W" };
-
+    function getPossiblePathBRQ(i: number, j: number, last: Color, moves: number[][], possibleMoves: boolean[][]) {
         for(const move of moves) {
             let ii = i+move[0], jj = j+move[1];
             if(inBounds(ii, jj)) {
@@ -78,14 +86,13 @@ export default function ChessBoard() {
                     possibleMoves[ii][jj] = true;
                 }
                 if(inBounds(ii, jj))
-                    if (board[ii][jj]?.endsWith(opp[last]))
+                    if (board[ii][jj]?.endsWith(opp(last)))
                         possibleMoves[ii][jj] = true;
             }
         }
     }
 
-    function isKingInCheck(i: number, j: number, color: string, check: boolean = false) {
-        const opp = { "W": "B", "B": "W" };
+    function isKingInCheck(i: number, j: number, color: Color, check: boolean = false) {
         let movesP = [];
         if(color == "W") movesP = [[1, -1], [1, 1]];
         else movesP = [[-1, -1], [-1, 1]];
@@ -95,32 +102,32 @@ export default function ChessBoard() {
         for (const move of movesP) {
             const ii = i+move[0], jj = j+move[1];
             if (inBounds(ii, jj))
-                if (board[ii][jj]?.startsWith("p") && board[ii][jj]?.endsWith(opp[color]))
+                if (board[ii][jj]?.startsWith("p") && board[ii][jj]?.endsWith(opp(color)))
                     return move;
         }
         for (const move of movesN) {
             const ii = i+move[0], jj = j+move[1];
             if (inBounds(ii, jj))
-                if (board[ii][jj]?.startsWith("N") && board[ii][jj]?.endsWith(opp[color]))
+                if (board[ii][jj]?.startsWith("N") && board[ii][jj]?.endsWith(opp(color)))
                     return move;
         }
         for(const move of movesBRQ) {
             let ii = i+move[0], jj = j+move[1];
             if(inBounds(ii, jj)) {
-                if(!check && board[ii][jj]?.startsWith("K") && board[ii][jj]?.endsWith(opp[color]))
+                if(!check && board[ii][jj]?.startsWith("K") && board[ii][jj]?.endsWith(opp(color)))
                     return [ii-i, jj-j];
                 for (; inBounds(ii, jj) && (board[ii][jj]==null || board[ii][jj] == "K"+color); ii+=move[0], jj+=move[1]);
                 if(inBounds(ii, jj)) {
                     const ind = movesBRQ.indexOf(move);
 
-                    if (board[ii][jj]?.startsWith("Q") && board[ii][jj]?.endsWith(opp[color]))
+                    if (board[ii][jj]?.startsWith("Q") && board[ii][jj]?.endsWith(opp(color)))
                         return [ii-i, jj-j];
                     if(ind%2 == 0) {
-                        if (board[ii][jj]?.startsWith("R") && board[ii][jj]?.endsWith(opp[color]))
+                        if (board[ii][jj]?.startsWith("R") && board[ii][jj]?.endsWith(opp(color)))
                             return [ii-i, jj-j];
                     }
                     else
-                        if (board[ii][jj]?.startsWith("B") && board[ii][jj]?.endsWith(opp[color]))
+                        if (board[ii][jj]?.startsWith("B") && board[ii][jj]?.endsWith(opp(color)))
                             return [ii-i, jj-j];
                 }
             }
@@ -128,10 +135,9 @@ export default function ChessBoard() {
         return null;
     }
 
-    function getPossibleMoves(i: int, j: int) {
+    function getPossibleMoves(i: number, j: number) {
         let possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
-        const opp = { "W": "B", "B": "W" };
-        const last = board[i][j].charAt(1);
+        const last = board[i][j]?.charAt(1) as Color;
 
         switch (board[i][j]) {
             case "pW":
@@ -159,7 +165,7 @@ export default function ChessBoard() {
                     const ii = i+move[0], jj = j+move[1];
                     if(inBounds(ii, jj)) {
                         if (board[ii][jj] == null) possibleMoves[ii][jj] = true;
-                        else if (board[ii][jj].endsWith(opp[last])) possibleMoves[ii][jj] = true;
+                        else if (board[ii][jj].endsWith(opp(last))) possibleMoves[ii][jj] = true;
                     }
                 }
                 break;
@@ -188,7 +194,7 @@ export default function ChessBoard() {
                             if (!isKingInCheck(ii, jj, last))
                                 possibleMoves[ii][jj] = true;
                         }
-                        else if(board[ii][jj].endsWith(opp[last]))
+                        else if(board[ii][jj].endsWith(opp(last)))
                             if(!isKingInCheck(ii, jj, last))
                                 possibleMoves[ii][jj] = true;
                     }
@@ -227,8 +233,7 @@ export default function ChessBoard() {
         setDottedSquares(Array.from({ length: 8 }, () => Array(8).fill(false)));
     }
 
-    function isInCheckmate(check: number[], color: string) {
-        const opp = { "W": "B", "B": "W" };
+    function isInCheckmate(check: number[], color: Color) {
         let i, j;
         if(color == "W") {
             i = kings[0][0];
@@ -247,7 +252,7 @@ export default function ChessBoard() {
                     if(!isKingInCheck(ii, jj, color))
                         return false;
                 }
-                else if(board[ii][jj].endsWith(opp[color]))
+                else if(board[ii][jj].endsWith(opp(color)))
                     if(!isKingInCheck(ii, jj, color))
                         return false;
             }
@@ -256,14 +261,14 @@ export default function ChessBoard() {
         const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
         if(movesN.find(elem => elem[0]==check[0] && elem[1]==check[1])) {
             const ii = i+check[0], jj = j+check[1];
-            if(isKingInCheck(ii, jj, opp[color], true))
+            if(isKingInCheck(ii, jj, opp(color), true))
                 return false;
         } else {
             const div = Math.max(check[0], check[1]);
             const move = [check[0]/div, check[1]/div];
             let ii = i+move[0], jj = j+move[1];
             for(; ii-i<=check[0] && jj-j<=check[1]; ii+=move[0], jj+=move[1]) {
-                if(isKingInCheck(ii, jj, opp[color], true))
+                if(isKingInCheck(ii, jj, opp(color), true))
                     return false;
             }
         }
@@ -304,7 +309,7 @@ export default function ChessBoard() {
         }
     }
 
-    const icons = {
+    const icons: Record<Piece | "null", React.ReactElement | null> = {
         "pW": <Image src="/images/pawn_white.svg" fill alt="white pawn" className={styles.whitePiece}/>,
         "BW": <Image src="/images/bishop_white.svg" fill alt="white bishop" className={styles.whitePiece}/>,
         "NW": <Image src="/images/knight_white.svg" fill alt="white knight" className={styles.whitePiece}/>,

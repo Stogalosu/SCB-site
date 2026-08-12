@@ -10,7 +10,14 @@ import Popover from "@/components/Popover/Popover";
 import PrimaryButton from "@/components/PrimaryButton/PrimaryButton";
 import Spacer from "@/components/Spacer";
 
-function UserDetails({ session }: { session: object }) {
+type Session = {
+    user: {
+        name?: string | null;
+        email?: string | null;
+    };
+};
+
+function UserDetails({ session }: { session: Session }) {
     const router = useRouter();
 
     async function onLogout() {
