@@ -233,9 +233,9 @@ export default function ChessBoard() {
         setDottedSquares(Array.from({ length: 8 }, () => Array(8).fill(false)));
     }
 
-    function isInCheckmate(check: number[], color: Color) {
+    function isInCheckmate(check: number[], kColor: Color) {
         let i, j;
-        if(color == "W") {
+        if(kColor == "W") {
             i = kings[0][0];
             j = kings[0][1];
         }
@@ -249,11 +249,11 @@ export default function ChessBoard() {
             const ii = i+move[0], jj = j+move[1];
             if(inBounds(ii, jj)) {
                 if(board[ii][jj] == null) {
-                    if(!isKingInCheck(ii, jj, color))
+                    if(!isKingInCheck(ii, jj, kColor))
                         return false;
                 }
-                else if(board[ii][jj].endsWith(opp(color)))
-                    if(!isKingInCheck(ii, jj, color))
+                else if(board[ii][jj].endsWith(opp(kColor)))
+                    if(!isKingInCheck(ii, jj, kColor))
                         return false;
             }
         }
@@ -261,15 +261,23 @@ export default function ChessBoard() {
         const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
         if(movesN.find(elem => elem[0]==check[0] && elem[1]==check[1])) {
             const ii = i+check[0], jj = j+check[1];
-            if(isKingInCheck(ii, jj, opp(color), true))
+            if(isKingInCheck(ii, jj, opp(kColor), true))
                 return false;
         } else {
             const div = Math.max(check[0], check[1]);
             const move = [check[0]/div, check[1]/div];
+            let movePi = -1;
+            if(kColor == "B") movePi = 1;
             let ii = i+move[0], jj = j+move[1];
-            for(; ii-i<=check[0] && jj-j<=check[1]; ii+=move[0], jj+=move[1]) {
-                if(isKingInCheck(ii, jj, opp(color), true))
+
+            for(; Math.abs(ii-i) <= Math.abs(check[0]) && Math.abs(jj-j) <= Math.abs(check[1]); ii+=move[0], jj+=move[1]) {
+                if(isKingInCheck(ii, jj, opp(kColor), true))
                     return false;
+                let iip = ii+movePi;
+                for(let a=1; a<=2 && 0<=iip && iip<=7; a++, iip+=movePi) {
+                    if(board[iip][jj]?.toString().startsWith('p'))
+                        return false;
+                }
             }
         }
         return true;
