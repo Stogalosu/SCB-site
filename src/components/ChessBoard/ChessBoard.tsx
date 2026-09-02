@@ -33,6 +33,8 @@ export default function ChessBoard() {
 
     const [isWhiteToMove, setWhiteToMove] = useState(true);
     const [kings, setKings] = useState([[0, 4], [7, 4]]);
+    const [kingsMoved, setKingsMoved] = useState([false, false]);
+    const [rooksMoved, setRooksMoved] = useState([[false, false], [false, false]]);
     const [isInCheck, setCheck] = useState<number[] | null>(null);
     const [isCheckmate, setCheckmate] = useState(false);
     const [board, setBoard] = useState<(Piece | null)[][]>([
@@ -135,6 +137,34 @@ export default function ChessBoard() {
         return null;
     }
 
+    function isCastlingPossible(i: number, j: number) {
+        let rooks = [], rooksM = [], kingM = false, color: Color, cast: (false | number[])[] = [[i, j-2], [i, j+2]];
+        const moves = [-1, 1];
+        if(i==0 && j==4) {
+            rooks = [[0, 0], [0, 7]];
+            rooksM = rooksMoved[0];
+            kingM = kingsMoved[0];
+            color = "W";
+        }
+        else if(i==7 && j==4) {
+            rooks = [[7, 0], [0, 7]];
+            rooksM = rooksMoved[1];
+            kingM = kingsMoved[1];
+            color = "B";
+        }
+        else return [false, false];
+
+        for(let k=0; k<=1; k++) {
+            if(!rooksM[k] && !kingM) {
+                for(let jj=j; jj!=rooks[k][1] && cast[k] != false; jj+=moves[k]) {
+                    if((board[i][jj] != null && jj!=4 && jj!=0 && jj!= 7) || isKingInCheck(i, jj, color))
+                        cast[k] = false;
+                }
+            } else return [false, false];
+        }
+        return cast;
+    }
+
     function getPossibleMoves(i: number, j: number) {
         let possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
         const last = board[i][j]?.charAt(1) as Color;
@@ -199,6 +229,15 @@ export default function ChessBoard() {
                                 possibleMoves[ii][jj] = true;
                     }
                 }
+
+                // Castling
+                const castling = isCastlingPossible(i, j);
+                for(let k=0; k<=1; k++)
+                    if(castling[k] != false) {
+                        const cast = castling[k] as number[];
+                        possibleMoves[cast[0]][cast[1]] = true;
+                    }
+
                 break;
         }
 
@@ -285,24 +324,54 @@ export default function ChessBoard() {
 
     function movePiece(i1: number, j1: number, i2: number, j2: number) {
         setCheck(null);
+        let newBoard = board;
 
+        // Update kings and castling
         let newKings = kings;
-        if(board[i1][j1] == "KW")
-            newKings = [[i2, j2], kings[1]];
-        if(board[i1][j1] == "KB")
-            newKings = [kings[0], [i2, j2]];
+        if(board[i1][j1]?.startsWith('K')) {
+            if (board[i1][j1] == "KW") {
+                newKings = [[i2, j2], kings[1]];
+                if (!kingsMoved[0]) setKingsMoved([true, kingsMoved[1]]);
+            } else if (board[i1][j1] == "KB") {
+                newKings = [kings[0], [i2, j2]];
+                if (!kingsMoved[1]) setKingsMoved([kingsMoved[0], true]);
+            }
+            if (j2 - j1 == 2) {
+                newBoard[i2][5] = newBoard[i2][7];
+                newBoard[i2][7] = null;
+            } else if (j2 - j1 == -2) {
+                newBoard[i2][3] = newBoard[i2][0];
+                newBoard[i2][0] = null;
+            }
+        }
         setKings(newKings);
 
-        let newBoard = board;
+        // Pawn promotion and piece movement
         if(board[i1][j1] == "pW" && i2 == 7)
             newBoard[i2][j2] = "QW";
         else if(board[i1][j1] == "pB" && i2 == 0)
             newBoard[i2][j2] = "QB";
         else newBoard[i2][j2] = newBoard[i1][j1];
         newBoard[i1][j1] = null;
+
+        // Update rooks movement
+        if(board[i1][j1] == "RW") {
+            if(i1==0 && j1==0 && !rooksMoved[0][0])
+                setRooksMoved([[true, rooksMoved[0][1]], rooksMoved[1]]);
+            else if(i1==0 && j1==7 && !rooksMoved[0][1])
+                setRooksMoved([[rooksMoved[0][0], true], rooksMoved[1]]);
+        } else if(board[i1][j1] == "RB") {
+            if(i1==7 && j1==0 && !rooksMoved[1][0])
+                setRooksMoved([rooksMoved[0], [true, rooksMoved[1][1]]]);
+            else if(i1==7 && j1==7 && !rooksMoved[1][1])
+                setRooksMoved([rooksMoved[0], [rooksMoved[1][0], true]]);
+        }
+
+        // Update board
         setBoard(newBoard);
         setWhiteToMove(!isWhiteToMove);
 
+        // Check if any king is in check
         const checkW = isKingInCheck(newKings[0][0], newKings[0][1], "W");
         const checkB = isKingInCheck(newKings[1][0], newKings[1][1], "B");
         if(checkW) {
