@@ -17,6 +17,42 @@ type Piece =
     | "pW" | "BW" | "NW" | "RW" | "QW" | "KW"
     | "pB" | "BB" | "NB" | "RB" | "QB" | "KB";
 
+const icons: Record<Piece | "null", React.ReactElement | null> = {
+    "pW": <Image src="/images/pawn_white.svg" fill alt="white pawn" className={styles.whitePiece}/>,
+    "BW": <Image src="/images/bishop_white.svg" fill alt="white bishop" className={styles.whitePiece}/>,
+    "NW": <Image src="/images/knight_white.svg" fill alt="white knight" className={styles.whitePiece}/>,
+    "RW": <Image src="/images/rook_white.svg" fill alt="white rook" className={styles.whitePiece}/>,
+    "QW": <Image src="/images/queen_white.svg" fill alt="white queen" className={styles.whitePiece}/>,
+    "KW": <Image src="/images/king_white.svg" fill alt="white king" className={styles.whitePiece}/>,
+    "pB": <Image src="/images/pawn_black.svg" fill alt="black pawn" className={styles.blackPiece}/>,
+    "BB": <Image src="/images/bishop_black.svg" fill alt="black bishop" className={styles.blackPiece}/>,
+    "NB": <Image src="/images/knight_black.svg" fill alt="black knight" className={styles.blackPiece}/>,
+    "RB": <Image src="/images/rook_black.svg" fill alt="black rook" className={styles.blackPiece}/>,
+    "QB": <Image src="/images/queen_black.svg" fill alt="black queen" className={styles.blackPiece}/>,
+    "KB": <Image src="/images/king_black.svg" fill alt="black king" className={styles.blackPiece}/>,
+    "null": null
+}
+
+function PromotionOptions({ row, onClick }: { row: number, onClick: (piece: Piece) => void }) {
+    const pieces: Piece[] = row === 7 ? ["QW", "RW", "BW", "NW"] : ["QB", "RB", "BB", "NB"];
+
+    return (
+        <div className={styles.promotionContainer}>
+            {pieces.map((piece) => (
+                <div
+                    key={piece}
+                    className={styles.promotionOption}
+                    onClick={() => {
+                        onClick(piece);
+                    }}
+                >
+                    {icons[piece]}
+                </div>
+            ))}
+        </div>
+    );
+}
+
 export default function ChessBoard() {
     function inBounds(i: number, j: number) {
         return 0<=i && i<=7 && 0<=j && j<=7
@@ -84,6 +120,8 @@ export default function ChessBoard() {
     const [promotionSqs, setPromotionSqs] = useState(
         Array.from({ length: 8 }, () => Array(8).fill(false))
     );
+
+    let promotePiece: Piece | null = null;
 
     function getPossiblePathBRQ(i: number, j: number, last: Color, moves: number[][], possibleMoves: boolean[][]) {
         for(const move of moves) {
@@ -200,6 +238,7 @@ export default function ChessBoard() {
                     if(i+1==7)
                         promotionMoves[i+1][j-1] = true;
                 }
+                setPromotionSqs(promotionMoves);
                 break;
             case "pB":
                 if(!board[i-1][j]) {
@@ -303,6 +342,7 @@ export default function ChessBoard() {
 
     function resetPossibleMoves() {
         setDottedSquares(Array.from({ length: 8 }, () => Array(8).fill(false)));
+        setPromotionSqs(Array.from({ length: 8 }, () => Array(8).fill(false)));
     }
 
     function isInCheckmate(check: number[], kColor: Color) {
@@ -381,9 +421,9 @@ export default function ChessBoard() {
 
         // Pawn promotion and piece movement
         if(board[i1][j1] == "pW" && i2 == 7)
-            newBoard[i2][j2] = "QW";
+            newBoard[i2][j2] = promotePiece;
         else if(board[i1][j1] == "pB" && i2 == 0)
-            newBoard[i2][j2] = "QB";
+            newBoard[i2][j2] = promotePiece;
         else newBoard[i2][j2] = newBoard[i1][j1];
         newBoard[i1][j1] = null;
 
@@ -419,22 +459,6 @@ export default function ChessBoard() {
         }
     }
 
-    const icons: Record<Piece | "null", React.ReactElement | null> = {
-        "pW": <Image src="/images/pawn_white.svg" fill alt="white pawn" className={styles.whitePiece}/>,
-        "BW": <Image src="/images/bishop_white.svg" fill alt="white bishop" className={styles.whitePiece}/>,
-        "NW": <Image src="/images/knight_white.svg" fill alt="white knight" className={styles.whitePiece}/>,
-        "RW": <Image src="/images/rook_white.svg" fill alt="white rook" className={styles.whitePiece}/>,
-        "QW": <Image src="/images/queen_white.svg" fill alt="white queen" className={styles.whitePiece}/>,
-        "KW": <Image src="/images/king_white.svg" fill alt="white king" className={styles.whitePiece}/>,
-        "pB": <Image src="/images/pawn_black.svg" fill alt="black pawn" className={styles.blackPiece}/>,
-        "BB": <Image src="/images/bishop_black.svg" fill alt="black bishop" className={styles.blackPiece}/>,
-        "NB": <Image src="/images/knight_black.svg" fill alt="black knight" className={styles.blackPiece}/>,
-        "RB": <Image src="/images/rook_black.svg" fill alt="black rook" className={styles.blackPiece}/>,
-        "QB": <Image src="/images/queen_black.svg" fill alt="black queen" className={styles.blackPiece}/>,
-        "KB": <Image src="/images/king_black.svg" fill alt="black king" className={styles.blackPiece}/>,
-        "null": null
-    }
-
     return (
         <>
             <div className={styles.chessBoard}>
@@ -461,7 +485,15 @@ export default function ChessBoard() {
                                     {dottedSquares[rowIndex][colIndex] == true && (
                                         promotionSqs[rowIndex][colIndex] ? (
                                             <Popover
-                                                content={"Choose promotion"}
+                                                content={
+                                                    <PromotionOptions
+                                                        row={rowIndex}
+                                                        onClick={(piece: Piece) => {
+                                                            promotePiece = piece;
+                                                            onSquareClick(rowIndex, colIndex);
+                                                        }}
+                                                    />
+                                                }
                                                 translateX="-90%"
                                             >
                                                 <div className={styles.dot}/>
@@ -491,7 +523,15 @@ export default function ChessBoard() {
                                 {dottedSquares[rowIndex][colIndex] == true && (
                                     promotionSqs[rowIndex][colIndex] ? (
                                         <Popover
-                                            content={"Choose promotion"}
+                                            content={
+                                                <PromotionOptions
+                                                    row={rowIndex}
+                                                    onClick={(piece: Piece) => {
+                                                        promotePiece = piece;
+                                                        onSquareClick(rowIndex, colIndex);
+                                                    }}
+                                                />
+                                            }
                                             translateX="-90%"
                                         >
                                             <div className={styles.dot}/>
