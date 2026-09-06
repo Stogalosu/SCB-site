@@ -376,7 +376,7 @@ export default function ChessBoard() {
             if(isKingInCheck(ii, jj, opp(kColor), true))
                 return false;
         } else {
-            const div = Math.max(check[0], check[1]);
+            const div = Math.max(Math.abs(check[0]), Math.abs(check[1]));
             const move = [check[0]/div, check[1]/div];
             let movePi = -1;
             if(kColor == "B") movePi = 1;
