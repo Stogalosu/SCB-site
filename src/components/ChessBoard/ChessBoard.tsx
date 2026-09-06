@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./ChessBoard.module.css";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ChessPawn, ChessBishop, ChessKnight, ChessRook, ChessQueen, ChessKing } from "lucide-react";
 import Image from "next/image";
 import type { DetailedHTMLProps, HTMLAttributes } from "react";
@@ -70,9 +70,6 @@ export default function ChessBoard() {
     }
 
     const [isWhiteToMove, setWhiteToMove] = useState(true);
-    const [kings, setKings] = useState([[0, 4], [7, 4]]);
-    const [kingsMoved, setKingsMoved] = useState([false, false]);
-    const [rooksMoved, setRooksMoved] = useState([[false, false], [false, false]]);
     const [isInCheck, setCheck] = useState<number[] | null>(null);
     const [isCheckmate, setCheckmate] = useState(false);
     const [board, setBoard] = useState<(Piece | null)[][]>([
@@ -86,6 +83,13 @@ export default function ChessBoard() {
         ["RB", "NB", "BB", "QB", "KB", "BB", "NB", "RB"]
     ]);
     const [highlight, setHighlight] = useState([-1, -1]);
+
+    const kingsRef = useRef<Record<Color, number[]>>({ W: [0, 4], B: [7, 4] });
+    const kingsMovedRef = useRef<Record<Color, boolean>>({ W: false, B: false });
+    const rooksMovedRef = useRef<Record<Color, [boolean, boolean]>>({
+        W: [false, false],
+        B: [false, false],
+    });
 
     function onSquareClick(rowIndex: number, colIndex: number) {
         if(board[rowIndex][colIndex] != null) {
@@ -181,24 +185,20 @@ export default function ChessBoard() {
     }
 
     function isCastlingPossible(i: number, j: number) {
-        let rooks = [], rooksM = [], kingM = false, color: Color, cast: (false | number[])[] = [[i, j-2], [i, j+2]];
+        let rooks = [], color: Color, cast: (false | number[])[] = [[i, j-2], [i, j+2]];
         const moves = [-1, 1];
         if(i==0 && j==4) {
             rooks = [[0, 0], [0, 7]];
-            rooksM = rooksMoved[0];
-            kingM = kingsMoved[0];
             color = "W";
         }
         else if(i==7 && j==4) {
-            rooks = [[7, 0], [0, 7]];
-            rooksM = rooksMoved[1];
-            kingM = kingsMoved[1];
+            rooks = [[7, 0], [7, 7]];
             color = "B";
         }
         else return [false, false];
 
         for(let k=0; k<=1; k++) {
-            if(!rooksM[k] && !kingM) {
+            if(!rooksMovedRef.current[color][k] && !kingsMovedRef.current[color]) {
                 for(let jj=j; jj!=rooks[k][1] && cast[k] != false; jj+=moves[k]) {
                     if((board[i][jj] != null && jj!=4 && jj!=0 && jj!= 7) || isKingInCheck(i, jj, color))
                         cast[k] = false;
@@ -315,9 +315,8 @@ export default function ChessBoard() {
 
         //Blocking check (if the piece is not a king)
         if(isInCheck && board[i][j] != "KW" && board[i][j] != "KB") {
-            let king = [];
-            if(last == "W")  king = kings[0];
-            else king = kings[1];
+            let king = kingsRef.current[last];
+
             const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
             if(!movesN.find(elem => elem[0]==isInCheck[0] && elem[1]==isInCheck[1])) { //You cannot block a check from a knight
                 for(let i=0; i<=7; i++) {
@@ -346,15 +345,7 @@ export default function ChessBoard() {
     }
 
     function isInCheckmate(check: number[], kColor: Color) {
-        let i, j;
-        if(kColor == "W") {
-            i = kings[0][0];
-            j = kings[0][1];
-        }
-        else {
-            i = kings[1][0];
-            j = kings[1][1];
-        }
+        const i = kingsRef.current[kColor][0], j = kingsRef.current[kColor][1];
 
         const movesK = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
         for(const move of movesK) {
@@ -400,14 +391,13 @@ export default function ChessBoard() {
         let newBoard = board;
 
         // Update kings and castling
-        let newKings = kings;
         if(board[i1][j1]?.startsWith('K')) {
             if (board[i1][j1] == "KW") {
-                newKings = [[i2, j2], kings[1]];
-                if (!kingsMoved[0]) setKingsMoved([true, kingsMoved[1]]);
+                kingsRef.current["W"] = [i2, j2];
+                if (!kingsMovedRef.current["W"]) kingsMovedRef.current["W"] = true;
             } else if (board[i1][j1] == "KB") {
-                newKings = [kings[0], [i2, j2]];
-                if (!kingsMoved[1]) setKingsMoved([kingsMoved[0], true]);
+                kingsRef.current["B"] = [i2, j2];
+                if (!kingsMovedRef.current["B"]) kingsMovedRef.current["B"] = true;
             }
             if (j2 - j1 == 2) {
                 newBoard[i2][5] = newBoard[i2][7];
@@ -417,7 +407,6 @@ export default function ChessBoard() {
                 newBoard[i2][0] = null;
             }
         }
-        setKings(newKings);
 
         // Pawn promotion and piece movement
         if(board[i1][j1] == "pW" && i2 == 7)
@@ -429,15 +418,15 @@ export default function ChessBoard() {
 
         // Update rooks movement
         if(board[i1][j1] == "RW") {
-            if(i1==0 && j1==0 && !rooksMoved[0][0])
-                setRooksMoved([[true, rooksMoved[0][1]], rooksMoved[1]]);
-            else if(i1==0 && j1==7 && !rooksMoved[0][1])
-                setRooksMoved([[rooksMoved[0][0], true], rooksMoved[1]]);
+            if(i1==0 && j1==0 && !rooksMovedRef.current["W"][0])
+                rooksMovedRef.current["W"][0] = true;
+            else if(i1==0 && j1==7 && !rooksMovedRef.current["W"][1])
+                rooksMovedRef.current["W"][1] = true;
         } else if(board[i1][j1] == "RB") {
-            if(i1==7 && j1==0 && !rooksMoved[1][0])
-                setRooksMoved([rooksMoved[0], [true, rooksMoved[1][1]]]);
-            else if(i1==7 && j1==7 && !rooksMoved[1][1])
-                setRooksMoved([rooksMoved[0], [rooksMoved[1][0], true]]);
+            if(i1==7 && j1==0 && !rooksMovedRef.current["B"][0])
+                rooksMovedRef.current["B"][0] = true;
+            else if(i1==7 && j1==7 && !rooksMovedRef.current["B"][1])
+                rooksMovedRef.current["B"][1] = true;
         }
 
         // Update board
@@ -445,8 +434,8 @@ export default function ChessBoard() {
         setWhiteToMove(!isWhiteToMove);
 
         // Check if any king is in check
-        const checkW = isKingInCheck(newKings[0][0], newKings[0][1], "W");
-        const checkB = isKingInCheck(newKings[1][0], newKings[1][1], "B");
+        const checkW = isKingInCheck(kingsRef.current["W"][0], kingsRef.current["W"][1], "W");
+        const checkB = isKingInCheck(kingsRef.current["B"][0], kingsRef.current["B"][1], "B");
         if(checkW) {
             setCheck(checkW);
             if(isInCheckmate(checkW, "W"))
