@@ -141,43 +141,45 @@ export default function ChessBoard() {
         }
     }
 
-    function isKingInCheck(i: number, j: number, color: Color, check: boolean = false) {
+    function isKingInCheck(i: number, j: number, color: Color, check: boolean = false, simBoard?: (Piece | null)[][]) {
         let movesP = [];
         if(color == "W") movesP = [[1, -1], [1, 1]];
         else movesP = [[-1, -1], [-1, 1]];
         const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
         const movesBRQ = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
+        let board1 = board;
+        if(simBoard != undefined) board1 = simBoard;
 
         for (const move of movesP) {
             const ii = i+move[0], jj = j+move[1];
             if (inBounds(ii, jj))
-                if (board[ii][jj]?.startsWith("p") && board[ii][jj]?.endsWith(opp(color)))
+                if (board1[ii][jj]?.startsWith("p") && board1[ii][jj]?.endsWith(opp(color)))
                     return move;
         }
         for (const move of movesN) {
             const ii = i+move[0], jj = j+move[1];
             if (inBounds(ii, jj))
-                if (board[ii][jj]?.startsWith("N") && board[ii][jj]?.endsWith(opp(color)))
+                if (board1[ii][jj]?.startsWith("N") && board1[ii][jj]?.endsWith(opp(color)))
                     return move;
         }
         for(const move of movesBRQ) {
             let ii = i+move[0], jj = j+move[1];
             if(inBounds(ii, jj)) {
-                if(!check && board[ii][jj]?.startsWith("K") && board[ii][jj]?.endsWith(opp(color)))
+                if(!check && board1[ii][jj]?.startsWith("K") && board1[ii][jj]?.endsWith(opp(color)))
                     return [ii-i, jj-j];
-                for (; inBounds(ii, jj) && (board[ii][jj]==null || board[ii][jj] == "K"+color); ii+=move[0], jj+=move[1]);
+                for (; inBounds(ii, jj) && (board1[ii][jj]==null || board1[ii][jj] == "K"+color); ii+=move[0], jj+=move[1]);
                 if(inBounds(ii, jj)) {
                     const ind = movesBRQ.indexOf(move);
 
-                    if (board[ii][jj]?.startsWith("Q") && board[ii][jj]?.endsWith(opp(color)))
+                    if (board1[ii][jj]?.startsWith("Q") && board1[ii][jj]?.endsWith(opp(color)))
                         return [ii-i, jj-j];
                     if(ind%2 == 0) {
-                        if (board[ii][jj]?.startsWith("R") && board[ii][jj]?.endsWith(opp(color)))
+                        if (board1[ii][jj]?.startsWith("R") && board1[ii][jj]?.endsWith(opp(color)))
                             return [ii-i, jj-j];
                     }
                     else
-                        if (board[ii][jj]?.startsWith("B") && board[ii][jj]?.endsWith(opp(color)))
-                            return [ii-i, jj-j];
+                    if (board1[ii][jj]?.startsWith("B") && board1[ii][jj]?.endsWith(opp(color)))
+                        return [ii-i, jj-j];
                 }
             }
         }
@@ -336,6 +338,22 @@ export default function ChessBoard() {
                     possibleMoves = Array.from({length: 8}, () => Array(8).fill(false));
             }
         }
+
+        // Check if piece is pinned
+        if(board[i][j] != "KW" && board[i][j] != "KB") {
+            const king = kingsRef.current[last];
+
+            for(let ii=0; ii<=7; ii++)
+                for(let jj=0; jj<=7; jj++)
+                    if(possibleMoves[ii][jj]) {
+                        const newBoard = board.map(r => [...r]);
+                        newBoard[ii][jj] = board[i][j];
+                        newBoard[i][j] = null;
+                        if(isKingInCheck(king[0], king[1], last, false, newBoard))
+                            possibleMoves[ii][jj] = false;
+                    }
+        }
+
         setDottedSquares(possibleMoves);
     }
 
@@ -388,7 +406,7 @@ export default function ChessBoard() {
 
     function movePiece(i1: number, j1: number, i2: number, j2: number) {
         setCheck(null);
-        let newBoard = board;
+        const newBoard = board.map(r => [...r]);
 
         // Update kings and castling
         if(board[i1][j1]?.startsWith('K')) {
