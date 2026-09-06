@@ -29,6 +29,7 @@ export default function Popover({ children, content, translateX = "-50%" }: { ch
             <div
                 ref={triggerRef}
                 onClick={() => setIsVisible(prev => !prev)}
+                style={{ width: "100%", height: "100%" }}
             >
                 {children}
             </div>

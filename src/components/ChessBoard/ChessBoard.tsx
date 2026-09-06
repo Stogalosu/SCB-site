@@ -5,6 +5,8 @@ import { useState } from "react";
 import { ChessPawn, ChessBishop, ChessKnight, ChessRook, ChessQueen, ChessKing } from "lucide-react";
 import Image from "next/image";
 import type { DetailedHTMLProps, HTMLAttributes } from "react";
+import Popover from "@/components/Popover/Popover";
+import { User } from "lucide-react";
 
 type Color = "W" | "B";
 function opp(color: Color): Color {
@@ -77,6 +79,9 @@ export default function ChessBoard() {
     }
 
     const [dottedSquares, setDottedSquares] = useState(
+        Array.from({ length: 8 }, () => Array(8).fill(false))
+    );
+    const [promotionSqs, setPromotionSqs] = useState(
         Array.from({ length: 8 }, () => Array(8).fill(false))
     );
 
@@ -165,28 +170,56 @@ export default function ChessBoard() {
         return cast;
     }
 
+    function setPawnPossibleMove(i: number, j: number, color: Color, possibleMoves: boolean[][], promotionMoves: boolean[][]) {
+        possibleMoves[i][j] = true;
+        if(i==7)
+            promotionMoves[i][j] = true;
+    }
+
     function getPossibleMoves(i: number, j: number) {
         let possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
+        let promotionMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
         const last = board[i][j]?.charAt(1) as Color;
 
         switch (board[i][j]) {
             case "pW":
                 if(!board[i+1][j]) {
                     possibleMoves[i+1][j] = true;
+                    if(i+1==7)
+                        promotionMoves[i+1][j] = true;
                     if(i==1 && !board[i+2][j])
                         possibleMoves[i+2][j] = true;
                 }
-                if(board[i+1][j+1] != null && board[i+1][j+1]?.endsWith("B")) possibleMoves[i+1][j+1] = true;
-                if(board[i+1][j-1] != null && board[i+1][j-1]?.endsWith("B")) possibleMoves[i+1][j-1] = true;
+                if(board[i+1][j+1] != null && board[i+1][j+1]?.endsWith("B")) {
+                    possibleMoves[i+1][j+1] = true;
+                    if(i+1==7)
+                        promotionMoves[i+1][j+1] = true;
+                }
+                if(board[i+1][j-1] != null && board[i+1][j-1]?.endsWith("B")) {
+                    possibleMoves[i+1][j-1] = true;
+                    if(i+1==7)
+                        promotionMoves[i+1][j-1] = true;
+                }
                 break;
             case "pB":
                 if(!board[i-1][j]) {
                     possibleMoves[i-1][j] = true;
+                    if(i-1==0)
+                        promotionMoves[i-1][j] = true;
                     if(i==6 && !board[i-2][j])
                         possibleMoves[i-2][j] = true;
                 }
-                if(board[i-1][j+1] != null && board[i-1][j+1]?.endsWith("W")) possibleMoves[i-1][j+1] = true;
-                if(board[i-1][j-1] != null && board[i-1][j-1]?.endsWith("W")) possibleMoves[i-1][j-1] = true;
+                if(board[i-1][j+1] != null && board[i-1][j+1]?.endsWith("W")) {
+                    possibleMoves[i-1][j+1] = true;
+                    if(i-1==0)
+                        promotionMoves[i-1][j+1] = true;
+                }
+                if(board[i-1][j-1] != null && board[i-1][j-1]?.endsWith("W")) {
+                    possibleMoves[i-1][j-1] = true;
+                    if(i-1==0)
+                        promotionMoves[i-1][j-1] = true;
+                }
+                setPromotionSqs(promotionMoves);
                 break;
             case "NW":
             case "NB":
@@ -411,7 +444,10 @@ export default function ChessBoard() {
                             return (
                                 <div
                                     role="button"
-                                    onClick={() => onSquareClick(rowIndex, colIndex)}
+                                    onClick={() => {
+                                        if(!promotionSqs[rowIndex][colIndex])
+                                            onSquareClick(rowIndex, colIndex)
+                                    }}
                                     key={`${rowIndex}-${colIndex}`}
                                     className={
                                         (highlight[0] == rowIndex && highlight[1] == colIndex)
@@ -422,14 +458,26 @@ export default function ChessBoard() {
                                     }
                                 >
                                     {icons[board[rowIndex][colIndex] ?? "null"]}
-                                    {dottedSquares[rowIndex][colIndex] == true && <div className={styles.dot}/> }
+                                    {dottedSquares[rowIndex][colIndex] == true && (
+                                        promotionSqs[rowIndex][colIndex] ? (
+                                            <Popover
+                                                content={"Choose promotion"}
+                                                translateX="-90%"
+                                            >
+                                                <div className={styles.dot}/>
+                                            </Popover>
+                                        ) : <div className={styles.dot}/>
+                                    )}
                                 </div>
 
                             );
                         else return (
                             <div
                                 role="button"
-                                onClick={() => onSquareClick(rowIndex, colIndex)}
+                                onClick={() => {
+                                    if(!promotionSqs[rowIndex][colIndex])
+                                        onSquareClick(rowIndex, colIndex)
+                                }}
                                 key={`${rowIndex}-${colIndex}`}
                                 className={
                                     (highlight[0] == rowIndex && highlight[1] == colIndex)
@@ -440,7 +488,16 @@ export default function ChessBoard() {
                                 }
                             >
                                 {icons[board[rowIndex][colIndex] ?? "null"]}
-                                {dottedSquares[rowIndex][colIndex] == true && <div className={styles.dot}/>}
+                                {dottedSquares[rowIndex][colIndex] == true && (
+                                    promotionSqs[rowIndex][colIndex] ? (
+                                        <Popover
+                                            content={"Choose promotion"}
+                                            translateX="-90%"
+                                        >
+                                            <div className={styles.dot}/>
+                                        </Popover>
+                                    ) : <div className={styles.dot}/>
+                                )}
                             </div>
                         );
                     })
