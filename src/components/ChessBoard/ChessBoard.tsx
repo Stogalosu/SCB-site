@@ -2,11 +2,8 @@
 
 import styles from "./ChessBoard.module.css";
 import { useState, useRef } from "react";
-import { ChessPawn, ChessBishop, ChessKnight, ChessRook, ChessQueen, ChessKing } from "lucide-react";
 import Image from "next/image";
-import type { DetailedHTMLProps, HTMLAttributes } from "react";
 import Popover from "@/components/Popover/Popover";
-import { User } from "lucide-react";
 
 type Color = "W" | "B";
 function opp(color: Color): Color {
@@ -127,28 +124,26 @@ export default function ChessBoard() {
 
     let promotePiece: Piece | null = null;
 
-    function getPossiblePathBRQ(i: number, j: number, last: Color, moves: number[][], possibleMoves: boolean[][]) {
+    function getPossiblePathBRQ(board1: (Piece | null)[][], i: number, j: number, last: Color, moves: number[][], possibleMoves: boolean[][]) {
         for(const move of moves) {
             let ii = i+move[0], jj = j+move[1];
             if(inBounds(ii, jj)) {
-                for (; inBounds(ii, jj) && board[ii][jj] == null; ii += move[0], jj += move[1]) {
+                for (; inBounds(ii, jj) && board1[ii][jj] == null; ii += move[0], jj += move[1]) {
                     possibleMoves[ii][jj] = true;
                 }
                 if(inBounds(ii, jj))
-                    if (board[ii][jj]?.endsWith(opp(last)))
+                    if (board1[ii][jj]?.endsWith(opp(last)))
                         possibleMoves[ii][jj] = true;
             }
         }
     }
 
-    function isKingInCheck(i: number, j: number, color: Color, check: boolean = false, simBoard?: (Piece | null)[][]) {
+    function isKingInCheck(board1: (Piece | null)[][], i: number, j: number, color: Color, check: boolean = false) {
         let movesP = [];
         if(color == "W") movesP = [[1, -1], [1, 1]];
         else movesP = [[-1, -1], [-1, 1]];
         const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
         const movesBRQ = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
-        let board1 = board;
-        if(simBoard != undefined) board1 = simBoard;
 
         for (const move of movesP) {
             const ii = i+move[0], jj = j+move[1];
@@ -186,7 +181,7 @@ export default function ChessBoard() {
         return null;
     }
 
-    function isCastlingPossible(i: number, j: number) {
+    function isCastlingPossible(board1: (Piece | null)[][], i: number, j: number) {
         let rooks = [], color: Color, cast: (false | number[])[] = [[i, j-2], [i, j+2]];
         const moves = [-1, 1];
         if(i==0 && j==4) {
@@ -202,18 +197,12 @@ export default function ChessBoard() {
         for(let k=0; k<=1; k++) {
             if(!rooksMovedRef.current[color][k] && !kingsMovedRef.current[color]) {
                 for(let jj=j; jj!=rooks[k][1] && cast[k] != false; jj+=moves[k]) {
-                    if((board[i][jj] != null && jj!=4 && jj!=0 && jj!= 7) || isKingInCheck(i, jj, color))
+                    if((board1[i][jj] != null && jj!=4 && jj!=0 && jj!= 7) || isKingInCheck(board1, i, jj, color))
                         cast[k] = false;
                 }
             } else return [false, false];
         }
         return cast;
-    }
-
-    function setPawnPossibleMove(i: number, j: number, color: Color, possibleMoves: boolean[][], promotionMoves: boolean[][]) {
-        possibleMoves[i][j] = true;
-        if(i==7)
-            promotionMoves[i][j] = true;
     }
 
     function getPossibleMoves(i: number, j: number) {
@@ -276,17 +265,17 @@ export default function ChessBoard() {
             case "BW":
             case "BB":
                 const movesB = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
-                getPossiblePathBRQ(i, j, last, movesB, possibleMoves);
+                getPossiblePathBRQ(board, i, j, last, movesB, possibleMoves);
                 break;
             case "RW":
             case "RB":
                 const movesR = [[-1, 0], [0, 1], [1, 0], [0, -1]];
-                getPossiblePathBRQ(i, j, last, movesR, possibleMoves);
+                getPossiblePathBRQ(board, i, j, last, movesR, possibleMoves);
                 break;
             case "QW":
             case "QB":
                 const movesQ = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
-                getPossiblePathBRQ(i, j, last, movesQ, possibleMoves);
+                getPossiblePathBRQ(board, i, j, last, movesQ, possibleMoves);
                 break;
             case "KW":
             case "KB":
@@ -295,17 +284,17 @@ export default function ChessBoard() {
                     const ii = i+move[0], jj = j+move[1];
                     if(inBounds(ii, jj)) {
                         if(board[ii][jj] == null) {
-                            if (!isKingInCheck(ii, jj, last))
+                            if (!isKingInCheck(board, ii, jj, last))
                                 possibleMoves[ii][jj] = true;
                         }
                         else if(board[ii][jj].endsWith(opp(last)))
-                            if(!isKingInCheck(ii, jj, last))
+                            if(!isKingInCheck(board, ii, jj, last))
                                 possibleMoves[ii][jj] = true;
                     }
                 }
 
                 // Castling
-                const castling = isCastlingPossible(i, j);
+                const castling = isCastlingPossible(board, i, j);
                 for(let k=0; k<=1; k++)
                     if(castling[k] != false) {
                         const cast = castling[k] as number[];
@@ -349,7 +338,7 @@ export default function ChessBoard() {
                         const newBoard = board.map(r => [...r]);
                         newBoard[ii][jj] = board[i][j];
                         newBoard[i][j] = null;
-                        if(isKingInCheck(king[0], king[1], last, false, newBoard))
+                        if(isKingInCheck(newBoard, king[0], king[1], last))
                             possibleMoves[ii][jj] = false;
                     }
         }
@@ -362,19 +351,19 @@ export default function ChessBoard() {
         setPromotionSqs(Array.from({ length: 8 }, () => Array(8).fill(false)));
     }
 
-    function isInCheckmate(check: number[], kColor: Color) {
+    function isInCheckmate(testBoard: (Piece | null)[][], check: number[], kColor: Color) {
         const i = kingsRef.current[kColor][0], j = kingsRef.current[kColor][1];
 
         const movesK = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
         for(const move of movesK) {
             const ii = i+move[0], jj = j+move[1];
             if(inBounds(ii, jj)) {
-                if(board[ii][jj] == null) {
-                    if(!isKingInCheck(ii, jj, kColor))
+                if(testBoard[ii][jj] == null) {
+                    if(!isKingInCheck(testBoard, ii, jj, kColor))
                         return false;
                 }
-                else if(board[ii][jj].endsWith(opp(kColor)))
-                    if(!isKingInCheck(ii, jj, kColor))
+                else if(testBoard[ii][jj].endsWith(opp(kColor)))
+                    if(!isKingInCheck(testBoard, ii, jj, kColor))
                         return false;
             }
         }
@@ -382,7 +371,7 @@ export default function ChessBoard() {
         const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
         if(movesN.find(elem => elem[0]==check[0] && elem[1]==check[1])) {
             const ii = i+check[0], jj = j+check[1];
-            if(isKingInCheck(ii, jj, opp(kColor), true))
+            if(isKingInCheck(testBoard, ii, jj, opp(kColor), true))
                 return false;
         } else {
             const div = Math.max(Math.abs(check[0]), Math.abs(check[1]));
@@ -392,11 +381,11 @@ export default function ChessBoard() {
             let ii = i+move[0], jj = j+move[1];
 
             for(; Math.abs(ii-i) <= Math.abs(check[0]) && Math.abs(jj-j) <= Math.abs(check[1]); ii+=move[0], jj+=move[1]) {
-                if(isKingInCheck(ii, jj, opp(kColor), true))
+                if(isKingInCheck(testBoard, ii, jj, opp(kColor), true))
                     return false;
                 let iip = ii+movePi;
                 for(let a=1; a<=2 && 0<=iip && iip<=7; a++, iip+=movePi) {
-                    if(board[iip][jj]?.toString().startsWith('p'))
+                    if(testBoard[iip][jj]?.toString().startsWith('p'))
                         return false;
                 }
             }
@@ -451,17 +440,16 @@ export default function ChessBoard() {
         setBoard(newBoard);
         setWhiteToMove(!isWhiteToMove);
 
-        // Check if any king is in check
-        const checkW = isKingInCheck(kingsRef.current["W"][0], kingsRef.current["W"][1], "W");
-        const checkB = isKingInCheck(kingsRef.current["B"][0], kingsRef.current["B"][1], "B");
+        const checkW = isKingInCheck(newBoard, kingsRef.current["W"][0], kingsRef.current["W"][1], "W");
+        const checkB = isKingInCheck(newBoard, kingsRef.current["B"][0], kingsRef.current["B"][1], "B");
         if(checkW) {
             setCheck(checkW);
-            if(isInCheckmate(checkW, "W"))
+            if(isInCheckmate(newBoard, checkW, "W"))
                 setCheckmate(true);
         }
         else if(checkB) {
             setCheck(checkB);
-            if(isInCheckmate(checkB, "B"))
+            if(isInCheckmate(newBoard, checkB, "B"))
                 setCheckmate(true);
         }
     }
