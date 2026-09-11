@@ -456,6 +456,11 @@ export default function ChessBoard() {
 
     return (
         <>
+            <div className={styles.rowLabels}>
+                {Array.from({ length: 8 }).map((_, index) => (
+                    <span key={index}>{index+1}</span>
+                ))}
+            </div>
             <div className={styles.chessBoard}>
                 {board.map((row, rowI) =>
                     row.map((col, colI) => {
