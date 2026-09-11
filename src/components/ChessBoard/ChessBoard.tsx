@@ -457,8 +457,11 @@ export default function ChessBoard() {
     return (
         <>
             <div className={styles.chessBoard}>
-                {board.map((row, rowIndex) =>
-                    row.map((col, colIndex) => {
+                {board.map((row, rowI) =>
+                    row.map((col, colI) => {
+                        const rowIndex = 7-rowI;
+                        const colIndex = colI;
+
                         if((rowIndex + colIndex)%2 == 0)
                             return (
                                 <div
