@@ -25,8 +25,8 @@ pnpm dev
 ```
 
 ## Demo
-You can test the website here:
-http://stecker.ddns.net:3001
+You can test the website here: 
+https://scb-site-pink.vercel.app
 
 ## AI Usage
 I used AI for debugging and for writing a function that checks whether a chess piece is on the line between two other pieces.
