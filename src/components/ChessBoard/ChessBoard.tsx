@@ -97,49 +97,6 @@ export default function ChessBoard() {
 
     let promotePiece: Piece | null = null;
 
-    function isKingInCheck(board1: (Piece | null)[][], i: number, j: number, color: Color, check: boolean = false) {
-        let movesP = [];
-        if(color == "W") movesP = [[1, -1], [1, 1]];
-        else movesP = [[-1, -1], [-1, 1]];
-        const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
-        const movesBRQ = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
-
-        for (const move of movesP) {
-            const ii = i+move[0], jj = j+move[1];
-            if (inBounds(ii, jj))
-                if (board1[ii][jj]?.startsWith("p") && board1[ii][jj]?.endsWith(opp(color)))
-                    return move;
-        }
-        for (const move of movesN) {
-            const ii = i+move[0], jj = j+move[1];
-            if (inBounds(ii, jj))
-                if (board1[ii][jj]?.startsWith("N") && board1[ii][jj]?.endsWith(opp(color)))
-                    return move;
-        }
-        for(const move of movesBRQ) {
-            let ii = i+move[0], jj = j+move[1];
-            if(inBounds(ii, jj)) {
-                if(!check && board1[ii][jj]?.startsWith("K") && board1[ii][jj]?.endsWith(opp(color)))
-                    return [ii-i, jj-j];
-                for (; inBounds(ii, jj) && (board1[ii][jj]==null || board1[ii][jj] == "K"+color); ii+=move[0], jj+=move[1]);
-                if(inBounds(ii, jj)) {
-                    const ind = movesBRQ.indexOf(move);
-
-                    if (board1[ii][jj]?.startsWith("Q") && board1[ii][jj]?.endsWith(opp(color)))
-                        return [ii-i, jj-j];
-                    if(ind%2 == 0) {
-                        if (board1[ii][jj]?.startsWith("R") && board1[ii][jj]?.endsWith(opp(color)))
-                            return [ii-i, jj-j];
-                    }
-                    else
-                    if (board1[ii][jj]?.startsWith("B") && board1[ii][jj]?.endsWith(opp(color)))
-                        return [ii-i, jj-j];
-                }
-            }
-        }
-        return null;
-    }
-
     function isCastlingPossible(board1: (Piece | null)[][], i: number, j: number) {
         let rooks = [], color: Color, cast: (false | number[])[] = [[i, j-2], [i, j+2]];
         const moves = [-1, 1];

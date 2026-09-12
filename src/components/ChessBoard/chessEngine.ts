@@ -1,13 +1,16 @@
 function getPieceMoves(type: Type, color?: Color) {
     switch(type) {
         case 'pawn':
-            if(!color) return null;
+            if(!color) return [];
             else if(color == Color.White)
                 return [[1, -1], [1, 1]];
             else return [[-1, -1], [-1, 1]];
             break;
         case 'bishop':
             return [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+            break;
+        case 'knight':
+            return [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
             break;
         case 'rook':
             return [[1, 0], [0, 1], [-1, 0], [0, -1]];
@@ -17,7 +20,7 @@ function getPieceMoves(type: Type, color?: Color) {
             return [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
             break;
         default:
-            return null;
+            return [];
             break;
     }
 };
@@ -96,4 +99,55 @@ function getPossiblePathBRQ(board: Board, piece: Piece, possibleMoves: Move[]) {
                     });
         }
     }
+}
+
+export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = false) {
+    const board = (pos: Pos) => boardVal[8*pos.i + pos.j];
+
+    const movesP = getPieceMoves(Type.Pawn, piece.color) ;
+    const movesN = getPieceMoves(Type.Knight);
+    const movesBRQ = getPieceMoves(Type.Queen);
+    const pos = piece.position;
+    const color = piece.color
+
+    for (const move of movesP) {
+        const poss = { i: pos.i+move[0], j: pos.j+move[1] };
+        if (inBounds(poss))
+            if (board(poss)?.type == Type.Pawn && board(poss)?.color != color)
+                    return move;
+    }
+    for (const move of movesN) {
+        const poss = { i: pos.i+move[0], j: pos.j+move[1] };
+        if (inBounds(poss))
+            if (board(poss)?.type == Type.Knight && board(poss)?.color != color)
+                return move;
+    }
+    for(const move of movesBRQ) {
+        const poss = { i: pos.i+move[0], j: pos.j+move[1] };
+        if(inBounds(poss)) {
+            if(!check && board(poss)?.type == Type.King && board(poss)?.color != color)
+                return [poss.i-pos.i, poss.j-pos.j];
+            for (;
+                inBounds(poss) &&
+                (board(poss)==null ||
+                    board(poss)?.type == Type.King &&
+                    board(poss)?.color == color);
+                poss = { i: poss.i+move[0], j: poss.j+move[1] }
+            );
+            if(inBounds(poss)) {
+                const ind = movesBRQ.indexOf(move);
+
+                if (board(poss)?.type == Type.Queen && board(poss)?.color != color)
+                    return [ii-i, jj-j];
+                if(ind%2 == 0) {
+                    if (board(poss)?.type == Type.Rook && board(poss)?.color != color)
+                        return [ii-i, jj-j];
+                }
+                else
+                if (board(poss)?.type == Type.Bishop && board(poss)?.color != color)
+                    return [ii-i, jj-j];
+            }
+        }
+    }
+    return null;
 }
