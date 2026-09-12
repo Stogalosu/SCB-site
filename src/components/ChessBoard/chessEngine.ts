@@ -1,3 +1,27 @@
+function getPieceMoves(type: Type, color?: Color) {
+    switch(type) {
+        case 'pawn':
+            if(!color) return null;
+            else if(color == Color.White)
+                return [[1, -1], [1, 1]];
+            else return [[-1, -1], [-1, 1]];
+            break;
+        case 'bishop':
+            return [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+            break;
+        case 'rook':
+            return [[1, 0], [0, 1], [-1, 0], [0, -1]];
+            break;
+        case 'queen':
+        case 'king':
+            return [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+            break;
+        default:
+            return null;
+            break;
+    }
+};
+
 // Create initial board logic
 function makePiece(type: Type, color: Color, position: Pos): Piece {
     return { type, color, position };
@@ -33,7 +57,7 @@ export function getInitialBoard(): Board {
 }
 
 // Check if position is out of bounds
-export function inBounds(position: Pos) {
+export function inBounds(pos: Pos) {
     return 0<=pos.i && pos.i<=7 && 0<=pos.j && pos.j<=7;
 }
 
@@ -47,4 +71,29 @@ export function isInBetween(king: Pos, sq: Pos, att: Pos) {
         sq.j <= Math.max(king.j, att.j);
 
     return collinear && between;
+}
+
+function getPossiblePathBRQ(board: Board, piece: Piece, possibleMoves: Move[]) {
+    const moves = getPieceMoves(piece.type) ?? [];
+    const pos = piece.position;
+    for(const move of moves) {
+        let poss = { i: pos.i+move[0], j: pos.j+move[1] };
+        if(inBounds(poss)) {
+            for (; inBounds(poss) && board[8*poss.i + poss.j] == null; poss = { i: poss.i + move[0], j: poss.j + move[1] }) {
+                possibleMoves.push({
+                    piece,
+                    from: pos,
+                    to: poss
+                });
+            }
+            if(inBounds(poss))
+                if (board[8*poss.i + poss.j]?.color != piece.color)
+                    possibleMoves.push({
+                        piece,
+                        from: pos,
+                        to: poss,
+                        captured: board[8*poss.i + poss.j] ?? piece
+                    });
+        }
+    }
 }

@@ -97,20 +97,6 @@ export default function ChessBoard() {
 
     let promotePiece: Piece | null = null;
 
-    function getPossiblePathBRQ(board1: (Piece | null)[][], i: number, j: number, last: Color, moves: number[][], possibleMoves: boolean[][]) {
-        for(const move of moves) {
-            let ii = i+move[0], jj = j+move[1];
-            if(inBounds(ii, jj)) {
-                for (; inBounds(ii, jj) && board1[ii][jj] == null; ii += move[0], jj += move[1]) {
-                    possibleMoves[ii][jj] = true;
-                }
-                if(inBounds(ii, jj))
-                    if (board1[ii][jj]?.endsWith(opp(last)))
-                        possibleMoves[ii][jj] = true;
-            }
-        }
-    }
-
     function isKingInCheck(board1: (Piece | null)[][], i: number, j: number, color: Color, check: boolean = false) {
         let movesP = [];
         if(color == "W") movesP = [[1, -1], [1, 1]];
