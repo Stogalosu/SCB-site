@@ -97,30 +97,6 @@ export default function ChessBoard() {
 
     let promotePiece: Piece | null = null;
 
-    function isCastlingPossible(board1: (Piece | null)[][], i: number, j: number) {
-        let rooks = [], color: Color, cast: (false | number[])[] = [[i, j-2], [i, j+2]];
-        const moves = [-1, 1];
-        if(i==0 && j==4) {
-            rooks = [[0, 0], [0, 7]];
-            color = "W";
-        }
-        else if(i==7 && j==4) {
-            rooks = [[7, 0], [7, 7]];
-            color = "B";
-        }
-        else return [false, false];
-
-        for(let k=0; k<=1; k++) {
-            if(!rooksMovedRef.current[color][k] && !kingsMovedRef.current[color]) {
-                for(let jj=j; jj!=rooks[k][1] && cast[k] != false; jj+=moves[k]) {
-                    if((board1[i][jj] != null && jj!=4 && jj!=0 && jj!= 7) || isKingInCheck(board1, i, jj, color))
-                        cast[k] = false;
-                }
-            } else return [false, false];
-        }
-        return cast;
-    }
-
     function getPossibleMoves(i: number, j: number) {
         let possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
         let promotionMoves = Array.from({ length: 8 }, () => Array(8).fill(false));

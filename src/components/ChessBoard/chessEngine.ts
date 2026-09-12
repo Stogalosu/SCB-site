@@ -151,3 +151,39 @@ export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = fa
     }
     return null;
 }
+
+function isCastlingPossible(
+    boardVal: Board,
+    piece: Piece,
+    kingsMovedRef: React.RefObject<Record<Color, boolean>>,
+    rooksMovedRef: React.RefObject<Record<Color, [boolean, boolean]>>
+) {
+    const board = (pos: Pos) => boardVal[8*pos.i + pos.j];
+
+    let rooks: Pos[] = [], castling: Move[] = [];
+    const color = piece.color;
+    const pos = piece.position;
+    const to = [{i: pos.i, j: pos.j-2}, {i: pos.i, j: pos.j+2}];
+
+    const moves = [-1, 1];
+    if(color == Color.White)
+        rooks = [{i: 0, j: 0}, {i: 0, j: 7}];
+    else rooks = [{i: 7, j: 0}, {i: 7, j: 7}];
+
+    for(let k=0; k<=1; k++) {
+        if(!rooksMovedRef.current[color][k] && !kingsMovedRef.current[color]) {
+            let cast = true
+            for(let poss={ i: pos.i, j: pos.j }; poss.j != rooks[k].j && cast; pos.j+=moves[k])
+                if((board(poss) != null && poss.j!=4 && poss.j!=0 && poss.j!= 7) || isKingInCheck(boardVal, piece))
+                    cast = false;
+            if(cast)
+                castling.push({
+                    piece,
+                    from: pos,
+                    to: to[k],
+                    isCastle: true
+                });
+        } else return [];
+    }
+    return castling;
+}
