@@ -1,4 +1,4 @@
-declare enum PieceType {
+declare enum Type {
     Pawn = 'pawn',
     Bishop = 'bishop',
     Knight = 'knight',
@@ -7,7 +7,7 @@ declare enum PieceType {
     King = 'king'
 }
 
-declare enum PieceColor {
+declare enum Color {
     White = 'white',
     Black = 'black'
 }
@@ -18,10 +18,10 @@ interface Pos {
 }
 
 interface Piece {
-    type: PieceType,
-    color: PieceColor,
+    type: Type,
+    color: Color,
     position: Pos,
-    lastPosition: Pos
+    lastPosition?: Pos
 }
 
 interface Move {
@@ -29,7 +29,9 @@ interface Move {
     from: Pos;
     to: Pos;
     captured?: Piece;
-    promotion?: PieceType;
+    promotion?: Type;
     isCastle?: boolean;
     isEnPassant?: boolean;
 }
+
+type Board = (Piece | null)[];
