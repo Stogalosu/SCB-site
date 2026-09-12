@@ -12,6 +12,9 @@
   --hover-secondary: #A35139;
 
   --navbar-height: 70px;
+  --board: 680px;
+  --board-top-pad: 12px;
+  --board-h-pad: 24px;
 }
 
 @media (prefers-color-scheme: dark) {

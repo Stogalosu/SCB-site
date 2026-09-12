@@ -552,7 +552,7 @@ export default function ChessBoard() {
                     })
                 )}
             </div>
-            <span style={{ alignSelf: "center", paddingTop: "40px", fontSize: "20px" }}>
+            <span style={{ alignSelf: "center", paddingTop: "32px", fontSize: "20px" }}>
                 <b>
                     { (isCheckmate && isWhiteToMove) && "CHECKMATE! BLACK WINS! "}
                     { (isCheckmate && !isWhiteToMove) && "CHECKMATE! WHITE WINS! "}

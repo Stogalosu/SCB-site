@@ -3,7 +3,7 @@
     grid-template-columns: repeat(8, 12.5%);
     grid-template-rows: repeat(8, 12.5%);
     width: 100%;
-    max-width: 680px;
+    max-width: var(--board);
     aspect-ratio: 1/1;
     border: 3px solid black;
 }
@@ -92,9 +92,9 @@
     flex-direction: column;
     justify-content: space-around;
     position: absolute;
-    top: calc(var(--navbar-height) + 24px);
-    left: calc(48% - min(100%, 680px) / 2);
-    height: min(100vw, 680px);
+    top: calc(var(--navbar-height) + var(--board-top-pad));
+    left: calc(48% - min(calc(100% - 2 * var(--board-h-pad)), var(--board)) / 2);
+    height: min(calc(100vw - 2 * var(--board-h-pad)), var(--board));
 }
 
 .columnLabels {
@@ -102,7 +102,7 @@
     flex-direction: row;
     justify-content: space-around;
     position: absolute;
-    top: calc(53% + min(100%, 680px) / 2);
-    left: calc(50% - min(100%, 680px) / 2);
-    width: min(100%, 680px);
+    top: calc(var(--navbar-height) + var(--board-top-pad) + min(calc(100vw - 2 * var(--board-h-pad)), var(--board)) + 8px);
+    left: calc(100vw - var(--board)) / 2 + var(--board-h-pad);
+    width: min(calc(100vw - 2 * var(--board-h-pad)), var(--board));
 }

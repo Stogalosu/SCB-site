@@ -1,7 +1,7 @@
 .main {
     display: flex;
     flex-direction: column;
-    padding: calc(var(--navbar-height) + 24px) 24px 0px;
+    padding: calc(var(--navbar-height) + var(--board-top-pad)) var(--board-h-pad) 0px;
     justify-content: center;
     align-items: center;
     width: 100dvw;
