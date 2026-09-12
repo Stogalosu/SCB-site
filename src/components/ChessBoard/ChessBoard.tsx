@@ -4,15 +4,11 @@ import styles from "./ChessBoard.module.css";
 import { useState, useRef } from "react";
 import Image from "next/image";
 import Popover from "@/components/Popover/Popover";
+import { getInitialBoard } from './chessEngine';
 
-type Color = "W" | "B";
 function opp(color: Color): Color {
     return color === "W" ? "B" : "W";
 }
-
-type Piece =
-    | "pW" | "BW" | "NW" | "RW" | "QW" | "KW"
-    | "pB" | "BB" | "NB" | "RB" | "QB" | "KB";
 
 const icons: Record<Piece | "null", React.ReactElement | null> = {
     "pW": <Image src="/images/pawn_white.svg" fill alt="white pawn" className={styles.whitePiece}/>,
@@ -51,34 +47,11 @@ function PromotionOptions({ row, onClick }: { row: number, onClick: (piece: Piec
 }
 
 export default function ChessBoard() {
-    function inBounds(i: number, j: number) {
-        return 0<=i && i<=7 && 0<=j && j<=7
-    }
-
-    function isInBetween(kingI: number, kingJ: number, sqI: number, sqJ: number, attI: number, attJ: number) {
-        const collinear = (sqJ - kingJ) * (attI - kingI) == (attJ - kingJ) * (sqI - kingI);
-        const between =
-            Math.min(kingI, attI) <= sqI &&
-            sqI <= Math.max(kingI, attI) &&
-            Math.min(kingJ, attJ) <= sqJ &&
-            sqJ <= Math.max(kingJ, attJ);
-
-        return collinear && between;
-    }
 
     const [isWhiteToMove, setWhiteToMove] = useState(true);
     const [isInCheck, setCheck] = useState<number[] | null>(null);
     const [isCheckmate, setCheckmate] = useState(false);
-    const [board, setBoard] = useState<(Piece | null)[][]>([
-        ["RW", "NW", "BW", "QW", "KW", "BW", "NW", "RW"],
-        ["pW", "pW", "pW", "pW", "pW", "pW", "pW", "pW"],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        ["pB", "pB", "pB", "pB", "pB", "pB", "pB", "pB"],
-        ["RB", "NB", "BB", "QB", "KB", "BB", "NB", "RB"]
-    ]);
+    const [board, setBoard] = useState<Board>(getInitialBoard());
     const [highlight, setHighlight] = useState([-1, -1]);
 
     const kingsRef = useRef<Record<Color, number[]>>({ W: [0, 4], B: [7, 4] });

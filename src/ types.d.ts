@@ -13,8 +13,8 @@ declare enum Color {
 }
 
 interface Pos {
-    row: number;
-    col: number;
+    i: number;
+    j: number;
 }
 
 interface Piece {
