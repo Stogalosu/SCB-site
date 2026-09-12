@@ -92,8 +92,17 @@
     flex-direction: column;
     justify-content: space-around;
     position: absolute;
-    /*top: calc(55% + min(100%, 680px) / 2);*/
     top: calc(var(--navbar-height) + 24px);
     left: calc(48% - min(100%, 680px) / 2);
     height: min(100vw, 680px);
+}
+
+.columnLabels {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    position: absolute;
+    top: calc(53% + min(100%, 680px) / 2);
+    left: calc(50% - min(100%, 680px) / 2);
+    width: min(100%, 680px);
 }

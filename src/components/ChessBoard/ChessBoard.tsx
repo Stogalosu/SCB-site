@@ -454,11 +454,17 @@ export default function ChessBoard() {
         }
     }
 
+    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
     return (
         <>
             <div className={styles.rowLabels}>
                 {Array.from({ length: 8 }).map((_, index) => (
-                    <span key={index}>{index+1}</span>
+                    <b key={index}>{index+1}</b>
+                ))}
+            </div>
+            <div className={styles.columnLabels}>
+                {letters.map((l, index) => (
+                    <b key={index}>{l}</b>
                 ))}
             </div>
             <div className={styles.chessBoard}>
@@ -546,7 +552,7 @@ export default function ChessBoard() {
                     })
                 )}
             </div>
-            <span style={{ alignSelf: "center", paddingTop: "14px", fontSize: "20px" }}>
+            <span style={{ alignSelf: "center", paddingTop: "40px", fontSize: "20px" }}>
                 <b>
                     { (isCheckmate && isWhiteToMove) && "CHECKMATE! BLACK WINS! "}
                     { (isCheckmate && !isWhiteToMove) && "CHECKMATE! WHITE WINS! "}
