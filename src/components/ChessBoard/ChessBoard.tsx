@@ -6,24 +6,39 @@ import Image from "next/image";
 import Popover from "@/components/Popover/Popover";
 import { getInitialBoard } from './chessEngine';
 
-function opp(color: Color): Color {
-    return color === "W" ? "B" : "W";
-}
-
-const icons: Record<Piece | "null", React.ReactElement | null> = {
-    "pW": <Image src="/images/pawn_white.svg" fill alt="white pawn" className={styles.whitePiece}/>,
-    "BW": <Image src="/images/bishop_white.svg" fill alt="white bishop" className={styles.whitePiece}/>,
-    "NW": <Image src="/images/knight_white.svg" fill alt="white knight" className={styles.whitePiece}/>,
-    "RW": <Image src="/images/rook_white.svg" fill alt="white rook" className={styles.whitePiece}/>,
-    "QW": <Image src="/images/queen_white.svg" fill alt="white queen" className={styles.whitePiece}/>,
-    "KW": <Image src="/images/king_white.svg" fill alt="white king" className={styles.whitePiece}/>,
-    "pB": <Image src="/images/pawn_black.svg" fill alt="black pawn" className={styles.blackPiece}/>,
-    "BB": <Image src="/images/bishop_black.svg" fill alt="black bishop" className={styles.blackPiece}/>,
-    "NB": <Image src="/images/knight_black.svg" fill alt="black knight" className={styles.blackPiece}/>,
-    "RB": <Image src="/images/rook_black.svg" fill alt="black rook" className={styles.blackPiece}/>,
-    "QB": <Image src="/images/queen_black.svg" fill alt="black queen" className={styles.blackPiece}/>,
-    "KB": <Image src="/images/king_black.svg" fill alt="black king" className={styles.blackPiece}/>,
-    "null": null
+function getIcons(piece: Piece) {
+    const color = piece.color;
+    switch(piece.type) {
+        case 'pawn':
+            return color == Color.White ?
+                <Image src="/images/pawn_white.svg" fill alt="white pawn" className={styles.whitePiece}/> :
+                <Image src="/images/pawn_black.svg" fill alt="black pawn" className={styles.blackPiece}/>;
+            break;
+        case 'bishop':
+            return color == Color.White ?
+                <Image src="/images/bishop_white.svg" fill alt="white bishop" className={styles.whitePiece}/> :
+                <Image src="/images/bishop_black.svg" fill alt="black bishop" className={styles.blackPiece}/>
+            break;
+        case 'knight':
+            return color == Color.White ?
+                <Image src="/images/knight_white.svg" fill alt="white knight" className={styles.whitePiece}/> :
+                <Image src="/images/knight_black.svg" fill alt="black knight" className={styles.blackPiece}/>;
+            break;
+        case 'rook':
+            return color == Color.White ?
+                <Image src="/images/rook_white.svg" fill alt="white rook" className={styles.whitePiece}/> :
+                <Image src="/images/rook_black.svg" fill alt="black rook" className={styles.blackPiece}/>;
+            break;
+        case 'queen':
+            return color == Color.White ?
+                <Image src="/images/queen_white.svg" fill alt="white queen" className={styles.whitePiece}/> :
+                <Image src="/images/queen_black.svg" fill alt="black queen" className={styles.blackPiece}/>;
+        default:
+            return color == Color.White ?
+                <Image src="/images/king_white.svg" fill alt="white king" className={styles.whitePiece}/> :
+                <Image src="/images/king_black.svg" fill alt="black king" className={styles.blackPiece}/>;
+            break;
+    }
 }
 
 function PromotionOptions({ row, onClick }: { row: number, onClick: (piece: Piece) => void }) {
