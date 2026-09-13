@@ -49,16 +49,19 @@ function PromotionOptions({ row, onClick }: { row: number, onClick: (piece: Piec
 export default function ChessBoard() {
 
     const [isWhiteToMove, setWhiteToMove] = useState(true);
-    const [isInCheck, setCheck] = useState<number[] | null>(null);
+    const [isInCheck, setCheck] = useState<Pos | null>(null);
     const [isCheckmate, setCheckmate] = useState(false);
     const [board, setBoard] = useState<Board>(getInitialBoard());
-    const [highlight, setHighlight] = useState([-1, -1]);
+    const [highlight, setHighlight] = useState({i: -1, j: -1});
 
-    const kingsRef = useRef<Record<Color, number[]>>({ W: [0, 4], B: [7, 4] });
-    const kingsMovedRef = useRef<Record<Color, boolean>>({ W: false, B: false });
+    const kingsRef = useRef<Record<Color, Piece>>({
+        'white': board[4]!!,
+        'black': board[8*7 + 4]!!
+    });
+    const kingsMovedRef = useRef<Record<Color, boolean>>({ 'white': false, 'black': false });
     const rooksMovedRef = useRef<Record<Color, [boolean, boolean]>>({
-        W: [false, false],
-        B: [false, false],
+        'white': [false, false],
+        'black': [false, false],
     });
 
     function onSquareClick(rowIndex: number, colIndex: number) {
@@ -96,147 +99,6 @@ export default function ChessBoard() {
     );
 
     let promotePiece: Piece | null = null;
-
-    function getPossibleMoves(i: number, j: number) {
-        let possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
-        let promotionMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
-        const last = board[i][j]?.charAt(1) as Color;
-
-        switch (board[i][j]) {
-            case "pW":
-                if(!board[i+1][j]) {
-                    possibleMoves[i+1][j] = true;
-                    if(i+1==7)
-                        promotionMoves[i+1][j] = true;
-                    if(i==1 && !board[i+2][j])
-                        possibleMoves[i+2][j] = true;
-                }
-                if(board[i+1][j+1] != null && board[i+1][j+1]?.endsWith("B")) {
-                    possibleMoves[i+1][j+1] = true;
-                    if(i+1==7)
-                        promotionMoves[i+1][j+1] = true;
-                }
-                if(board[i+1][j-1] != null && board[i+1][j-1]?.endsWith("B")) {
-                    possibleMoves[i+1][j-1] = true;
-                    if(i+1==7)
-                        promotionMoves[i+1][j-1] = true;
-                }
-                setPromotionSqs(promotionMoves);
-                break;
-            case "pB":
-                if(!board[i-1][j]) {
-                    possibleMoves[i-1][j] = true;
-                    if(i-1==0)
-                        promotionMoves[i-1][j] = true;
-                    if(i==6 && !board[i-2][j])
-                        possibleMoves[i-2][j] = true;
-                }
-                if(board[i-1][j+1] != null && board[i-1][j+1]?.endsWith("W")) {
-                    possibleMoves[i-1][j+1] = true;
-                    if(i-1==0)
-                        promotionMoves[i-1][j+1] = true;
-                }
-                if(board[i-1][j-1] != null && board[i-1][j-1]?.endsWith("W")) {
-                    possibleMoves[i-1][j-1] = true;
-                    if(i-1==0)
-                        promotionMoves[i-1][j-1] = true;
-                }
-                setPromotionSqs(promotionMoves);
-                break;
-            case "NW":
-            case "NB":
-                const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
-                for(const move of movesN) {
-                    const ii = i+move[0], jj = j+move[1];
-                    if(inBounds(ii, jj)) {
-                        if (board[ii][jj] == null) possibleMoves[ii][jj] = true;
-                        else if (board[ii][jj].endsWith(opp(last))) possibleMoves[ii][jj] = true;
-                    }
-                }
-                break;
-            case "BW":
-            case "BB":
-                const movesB = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
-                getPossiblePathBRQ(board, i, j, last, movesB, possibleMoves);
-                break;
-            case "RW":
-            case "RB":
-                const movesR = [[-1, 0], [0, 1], [1, 0], [0, -1]];
-                getPossiblePathBRQ(board, i, j, last, movesR, possibleMoves);
-                break;
-            case "QW":
-            case "QB":
-                const movesQ = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
-                getPossiblePathBRQ(board, i, j, last, movesQ, possibleMoves);
-                break;
-            case "KW":
-            case "KB":
-                const movesK = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
-                for(const move of movesK) {
-                    const ii = i+move[0], jj = j+move[1];
-                    if(inBounds(ii, jj)) {
-                        if(board[ii][jj] == null) {
-                            if (!isKingInCheck(board, ii, jj, last))
-                                possibleMoves[ii][jj] = true;
-                        }
-                        else if(board[ii][jj].endsWith(opp(last)))
-                            if(!isKingInCheck(board, ii, jj, last))
-                                possibleMoves[ii][jj] = true;
-                    }
-                }
-
-                // Castling
-                const castling = isCastlingPossible(board, i, j);
-                for(let k=0; k<=1; k++)
-                    if(castling[k] != false) {
-                        const cast = castling[k] as number[];
-                        possibleMoves[cast[0]][cast[1]] = true;
-                    }
-
-                break;
-        }
-
-        //Blocking check (if the piece is not a king)
-        if(isInCheck && board[i][j] != "KW" && board[i][j] != "KB") {
-            let king = kingsRef.current[last];
-
-            const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
-            if(!movesN.find(elem => elem[0]==isInCheck[0] && elem[1]==isInCheck[1])) { //You cannot block a check from a knight
-                for(let i=0; i<=7; i++) {
-                    for(let j=0; j<=7; j++) {
-                        if(possibleMoves[i][j] != false && !isInBetween(king[0], king[1], i, j, king[0] + isInCheck[0], king[1] + isInCheck[1]))
-                            possibleMoves[i][j] = false;
-                    }
-                }
-            } else {
-                // If check is from knight
-                const ii = king[0] + isInCheck[0], jj = king[1] + isInCheck[1]
-                if(possibleMoves[ii][jj] == true) {
-                    //If you can capture the knight, that is the only possible move
-                    possibleMoves = Array.from({length: 8}, () => Array(8).fill(false));
-                    possibleMoves[ii][jj] = true;
-                } else //If you can't, you can't move!
-                    possibleMoves = Array.from({length: 8}, () => Array(8).fill(false));
-            }
-        }
-
-        // Check if piece is pinned
-        if(board[i][j] != "KW" && board[i][j] != "KB") {
-            const king = kingsRef.current[last];
-
-            for(let ii=0; ii<=7; ii++)
-                for(let jj=0; jj<=7; jj++)
-                    if(possibleMoves[ii][jj]) {
-                        const newBoard = board.map(r => [...r]);
-                        newBoard[ii][jj] = board[i][j];
-                        newBoard[i][j] = null;
-                        if(isKingInCheck(newBoard, king[0], king[1], last))
-                            possibleMoves[ii][jj] = false;
-                    }
-        }
-
-        setDottedSquares(possibleMoves);
-    }
 
     function resetPossibleMoves() {
         setDottedSquares(Array.from({ length: 8 }, () => Array(8).fill(false)));

@@ -1,3 +1,5 @@
+const p = (i: number, j: number) => ({ i, j });
+
 function getPieceMoves(type: Type, color?: Color) {
     switch(type) {
         case 'pawn':
@@ -123,7 +125,7 @@ export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = fa
                 return move;
     }
     for(const move of movesBRQ) {
-        const poss = { i: pos.i+move[0], j: pos.j+move[1] };
+        let poss = { i: pos.i+move[0], j: pos.j+move[1] };
         if(inBounds(poss)) {
             if(!check && board(poss)?.type == Type.King && board(poss)?.color != color)
                 return [poss.i-pos.i, poss.j-pos.j];
@@ -138,21 +140,21 @@ export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = fa
                 const ind = movesBRQ.indexOf(move);
 
                 if (board(poss)?.type == Type.Queen && board(poss)?.color != color)
-                    return [ii-i, jj-j];
+                    return [poss.i-pos.i, poss.j-pos.j];
                 if(ind%2 == 0) {
                     if (board(poss)?.type == Type.Rook && board(poss)?.color != color)
-                        return [ii-i, jj-j];
+                        return [poss.i-pos.i, poss.j-pos.j];
                 }
                 else
                 if (board(poss)?.type == Type.Bishop && board(poss)?.color != color)
-                    return [ii-i, jj-j];
+                    return [poss.i-pos.i, poss.j-pos.j];
             }
         }
     }
     return null;
 }
 
-function isCastlingPossible(
+export function isCastlingPossible(
     boardVal: Board,
     piece: Piece,
     kingsMovedRef: React.RefObject<Record<Color, boolean>>,
@@ -186,4 +188,124 @@ function isCastlingPossible(
         } else return [];
     }
     return castling;
+}
+
+export function getPossibleMoves(
+    boardVal: Board,
+    piece: Piece,
+    isInCheck: Pos | null,
+    kingsRef: React.RefObject<Record<Color, Piece>>,
+    kingsMovedRef: React.RefObject<Record<Color, boolean>>,
+    rooksMovedRef: React.RefObject<Record<Color, [boolean, boolean]>>
+) {
+    const board = (pos: Pos) => boardVal[8*pos.i + pos.j];
+    const color = piece.color;
+    const pos = piece.position;
+    const i=pos.i, j=pos.j;
+
+    let moves: Move[] = [];
+
+    switch (piece.type) {
+        case 'pawn':
+            let i1 = 0;
+            if(color == Color.White) i1=i+1;
+            else i1=i-1;
+            
+            if(!board(p(i1, j))) {
+                moves.push({
+                    piece,
+                    from: pos,
+                    to: p(i1, j),
+                    promotion: (i1==7 && color == Color.White) || (i1==0 && color == Color.Black) ? Type.Pawn : undefined
+                });
+                if(i==1 && color == Color.White && !board(p(i+2, j)))
+                    moves.push({piece, from: pos, to: p(i+2, j)});
+                if(i==6 && color == Color.Black && !board(p(i-2, j)))
+                    moves.push({piece, from: pos, to: p(i-2, j)});
+            }
+            if(board(p(i1, j+1)) != null && board(p(i1, j+1))?.color != color)
+                moves.push({
+                    piece,
+                    from: pos,
+                    to: p(i1, j+1),
+                    captured: board(p(i1, j+1)) ?? undefined,
+                    promotion: (i1==7 && color == Color.White) || (i1==0 && color == Color.Black) ? Type.Pawn : undefined
+                });
+            if(board(p(i1, j-1)) != null && board(p(i1, j-1))?.color != color)
+                moves.push({
+                    piece,
+                    from: pos,
+                    to: p(i1, j-1),
+                    captured: board(p(i1, j-1)) ?? undefined,
+                    promotion: (i1==7 && color == Color.White) || (i1==0 && color == Color.Black) ? Type.Pawn : undefined
+                });
+            break;
+        case 'knight':
+            const movesN = getPieceMoves(piece.type);
+            for(const move of movesN) {
+                const poss = { i: i+move[0], j: j+move[1] };
+                if(inBounds(poss)) {
+                    if (board(poss) == null)
+                        moves.push({piece, from: pos, to: poss});
+                    else if (board(poss)?.color != color)
+                        moves.push({piece, from: pos, to: poss, captured: board(poss) ?? undefined});
+                }
+            }
+            break;
+        case 'bishop':
+        case 'rook':
+        case 'queen':
+            getPossiblePathBRQ(boardVal, piece, moves);
+            break;
+        case 'king':
+            const movesK = getPieceMoves(piece.type);
+            for(const move of movesK) {
+                const poss = { i: i+move[0], j: j+move[1] };
+                if(inBounds(poss)) {
+                    if(board(poss) == null) {
+                        if (!isKingInCheck(boardVal, piece))
+                            moves.push({piece, from: pos, to: poss});
+                    }
+                    else if(board(poss)?.color != color)
+                        if(!isKingInCheck(boardVal, piece))
+                            moves.push({piece, from: pos, to: poss, captured: board(poss) ?? undefined});
+                }
+            }
+
+            // Castling
+            const castling = isCastlingPossible(boardVal, piece, kingsMovedRef, rooksMovedRef);
+            for(const move of castling) moves.push(move);
+
+            break;
+    }
+
+    //Blocking check (if the piece is not a king)
+    if(isInCheck && board(pos)?.type != Type.King) {
+        const kingPos = kingsRef.current[color].position;
+        const attPos = { i: kingPos.i + isInCheck.i, j: kingPos.j + isInCheck.j };
+        let tempMoves: Move[] = [];
+
+        const movesN = getPieceMoves(Type.Knight);
+        const isKnightCheck = movesN.find(elem => elem[0]==isInCheck.i && elem[1]==isInCheck.j)
+        if(!isInCheck) //You cannot block a check from a knight
+            tempMoves = moves.filter(move => isInBetween(kingPos, move.to, attPos));
+        else
+            // If check is from knight, the only legal move is to capture it
+            tempMoves = moves.filter(move => move.to.i === attPos.i && move.to.j === attPos.j);
+        moves = tempMoves;
+    }
+
+    // Check if piece is pinned
+    if(board(pos)?.type != Type.King) {
+        const king = kingsRef.current[color];
+        const tempMoves = moves.filter(move => {
+            const newBoard: Board = [...boardVal];
+            newBoard[8*move.to.i + move.to.j] = newBoard[8*move.from.i + move.from.j];
+            newBoard[8*move.from.i + move.from.j] = null;
+            return !isKingInCheck(newBoard, king)
+        });
+        moves = tempMoves;
+    }
+
+    return moves;
 }
