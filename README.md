@@ -1,7 +1,9 @@
 # Smart Chess Board Website
 
 ## For Horizons
-What has changed? Well, visually, not much. I flipped the board vertically and added column and row labels, but under the hood, I rewrote a large portion of the code so that pieces are now stored in structures, rather than strings.
+This project has already been shipped to Beest.
+
+What has changed since then? Well, visually, not much. I flipped the board vertically and added column and row labels, but under the hood, I rewrote a large portion of the code so that pieces are now stored in structures, rather than strings.
 
 ## What is this?
 A website I want to integrate with my smart chess board. For now, I've coded the chess interface and logic, as I'm still learning how to build websites. You can log in to see the dashboard (which does nothing) or play chess.
