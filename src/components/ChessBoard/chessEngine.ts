@@ -1,3 +1,5 @@
+import { Type, Color, Pos, Piece, Move, Board } from "@/types";
+
 const p = (i: number, j: number) => ({ i, j });
 
 function getPieceMoves(type: Type, color?: Color) {
@@ -103,7 +105,7 @@ function getPossiblePathBRQ(board: Board, piece: Piece, possibleMoves: Move[]) {
     }
 }
 
-export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = false) {
+export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = false): Pos | null {
     const board = (pos: Pos) => boardVal[8*pos.i + pos.j];
 
     const movesP = getPieceMoves(Type.Pawn, piece.color) ;
@@ -116,19 +118,19 @@ export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = fa
         const poss = { i: pos.i+move[0], j: pos.j+move[1] };
         if (inBounds(poss))
             if (board(poss)?.type == Type.Pawn && board(poss)?.color != color)
-                    return move;
+                    return { i: move[0], j: move[1] };
     }
     for (const move of movesN) {
         const poss = { i: pos.i+move[0], j: pos.j+move[1] };
         if (inBounds(poss))
             if (board(poss)?.type == Type.Knight && board(poss)?.color != color)
-                return move;
+                return { i: move[0], j: move[1] };
     }
     for(const move of movesBRQ) {
         let poss = { i: pos.i+move[0], j: pos.j+move[1] };
         if(inBounds(poss)) {
             if(!check && board(poss)?.type == Type.King && board(poss)?.color != color)
-                return [poss.i-pos.i, poss.j-pos.j];
+                return { i: poss.i-pos.i, j: poss.i-pos.i };
             for (;
                 inBounds(poss) &&
                 (board(poss)==null ||
@@ -140,14 +142,14 @@ export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = fa
                 const ind = movesBRQ.indexOf(move);
 
                 if (board(poss)?.type == Type.Queen && board(poss)?.color != color)
-                    return [poss.i-pos.i, poss.j-pos.j];
+                    return { i: poss.i-pos.i, j: poss.i-pos.i };
                 if(ind%2 == 0) {
                     if (board(poss)?.type == Type.Rook && board(poss)?.color != color)
-                        return [poss.i-pos.i, poss.j-pos.j];
+                        return { i: poss.i-pos.i, j: poss.i-pos.i };
                 }
                 else
                 if (board(poss)?.type == Type.Bishop && board(poss)?.color != color)
-                    return [poss.i-pos.i, poss.j-pos.j];
+                    return { i: poss.i-pos.i, j: poss.i-pos.i };
             }
         }
     }

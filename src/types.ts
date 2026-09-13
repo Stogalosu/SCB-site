@@ -1,4 +1,4 @@
-declare enum Type {
+export enum Type {
     Pawn = 'pawn',
     Bishop = 'bishop',
     Knight = 'knight',
@@ -7,24 +7,24 @@ declare enum Type {
     King = 'king'
 }
 
-declare enum Color {
+export enum Color {
     White = 'white',
     Black = 'black'
 }
 
-interface Pos {
+export interface Pos {
     i: number;
     j: number;
 }
 
-interface Piece {
+export interface Piece {
     type: Type,
     color: Color,
     position: Pos,
     lastPosition?: Pos
 }
 
-interface Move {
+export interface Move {
     piece: Piece;
     from: Pos;
     to: Pos;
@@ -34,4 +34,4 @@ interface Move {
     isEnPassant?: boolean;
 }
 
-type Board = (Piece | null)[];
+export type Board = (Piece | null)[];
