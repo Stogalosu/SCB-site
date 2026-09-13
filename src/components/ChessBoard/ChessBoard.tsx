@@ -105,48 +105,6 @@ export default function ChessBoard() {
         setPromotionSqs(Array.from({ length: 8 }, () => Array(8).fill(false)));
     }
 
-    function isInCheckmate(testBoard: (Piece | null)[][], check: number[], kColor: Color) {
-        const i = kingsRef.current[kColor][0], j = kingsRef.current[kColor][1];
-
-        const movesK = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
-        for(const move of movesK) {
-            const ii = i+move[0], jj = j+move[1];
-            if(inBounds(ii, jj)) {
-                if(testBoard[ii][jj] == null) {
-                    if(!isKingInCheck(testBoard, ii, jj, kColor))
-                        return false;
-                }
-                else if(testBoard[ii][jj].endsWith(opp(kColor)))
-                    if(!isKingInCheck(testBoard, ii, jj, kColor))
-                        return false;
-            }
-        }
-
-        const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
-        if(movesN.find(elem => elem[0]==check[0] && elem[1]==check[1])) {
-            const ii = i+check[0], jj = j+check[1];
-            if(isKingInCheck(testBoard, ii, jj, opp(kColor), true))
-                return false;
-        } else {
-            const div = Math.max(Math.abs(check[0]), Math.abs(check[1]));
-            const move = [check[0]/div, check[1]/div];
-            let movePi = -1;
-            if(kColor == "B") movePi = 1;
-            let ii = i+move[0], jj = j+move[1];
-
-            for(; Math.abs(ii-i) <= Math.abs(check[0]) && Math.abs(jj-j) <= Math.abs(check[1]); ii+=move[0], jj+=move[1]) {
-                if(isKingInCheck(testBoard, ii, jj, opp(kColor), true))
-                    return false;
-                let iip = ii+movePi;
-                for(let a=1; a<=2 && 0<=iip && iip<=7; a++, iip+=movePi) {
-                    if(testBoard[iip][jj]?.toString().startsWith('p'))
-                        return false;
-                }
-            }
-        }
-        return true;
-    }
-
     function movePiece(i1: number, j1: number, i2: number, j2: number) {
         setCheck(null);
         const newBoard = board.map(r => [...r]);

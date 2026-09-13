@@ -309,3 +309,62 @@ export function getPossibleMoves(
 
     return moves;
 }
+
+export function isInCheckmate(boardVal: Board, check: Pos, king: Piece) {
+    const board = (pos: Pos) => boardVal[8*pos.i + pos.j];
+    const color = king.color;
+    const pos = { i: king.position.i, j: king.position.j };
+    const i = pos.i, j = pos.j;
+
+    const movesK = getPieceMoves(king.type);
+    for(const move of movesK) {
+        const poss = { i: i+move[0], j: j+move[1] };
+        const tempKing: Piece = { type: king.type, color, position: poss, lastPosition: king.lastPosition };
+        if(inBounds(poss)) {
+            // redundant!!
+            if(board(poss) == null) {
+                if(!isKingInCheck(boardVal, tempKing))
+                    return false;
+            }
+            else if(board(poss)?.color != color)
+                if(!isKingInCheck(boardVal, tempKing))
+                    return false;
+        }
+    }
+
+    const movesN = getPieceMoves(Type.Knight);
+    const isKnightCheck = movesN.find(elem => elem[0]==check.i && elem[1]==check.j);
+    if(isKnightCheck) {
+        const poss = { i: i+check.i, j: j+check.j };
+        const tempKing: Piece = {
+            type: king.type,
+            color: color==Color.White ? Color.Black : Color.White,
+            position: poss,
+            lastPosition: king.lastPosition
+        };
+        if(isKingInCheck(boardVal, tempKing, true))
+            return false;
+    } else {
+        const div = Math.max(Math.abs(check.i), Math.abs(check.j));
+        const move: Pos = { i: check.i/div, j: check.j/div };
+        const movePi = color == Color.White ? -1 : 1;
+        const poss = { i: i+move.i, j: j+move.j };
+        const tempKing: Piece = {
+            type: king.type,
+            color: color==Color.White ? Color.Black : Color.White,
+            position: poss,
+            lastPosition: king.lastPosition
+        };
+
+        for(; Math.abs(poss.i-i) <= Math.abs(check.i) && Math.abs(poss.j-j) <= Math.abs(check.i); poss.i += move.i, poss.j += move.j) {
+            if(isKingInCheck(boardVal, tempKing, true))
+                return false;
+            let posP = { i: poss.i+movePi, j: poss.j };
+            for(let a=1; a<=2 && 0<=posP.i && posP.i<=7; a++, posP.i += movePi) {
+                if(board(posP)?.type == Type.Pawn)
+                    return false;
+            }
+        }
+    }
+    return true;
+}
