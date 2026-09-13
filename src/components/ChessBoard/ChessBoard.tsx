@@ -4,46 +4,64 @@ import styles from "./ChessBoard.module.css";
 import { useState, useRef } from "react";
 import Image from "next/image";
 import Popover from "@/components/Popover/Popover";
+import { getInitialBoard, getPossibleMoves, isKingInCheck, isInCheckmate } from './chessEngine';
+import { Type, Color, Pos, Piece, Move, Board } from "@/types";
 
-type Color = "W" | "B";
-function opp(color: Color): Color {
-    return color === "W" ? "B" : "W";
-}
-
-type Piece =
-    | "pW" | "BW" | "NW" | "RW" | "QW" | "KW"
-    | "pB" | "BB" | "NB" | "RB" | "QB" | "KB";
-
-const icons: Record<Piece | "null", React.ReactElement | null> = {
-    "pW": <Image src="/images/pawn_white.svg" fill alt="white pawn" className={styles.whitePiece}/>,
-    "BW": <Image src="/images/bishop_white.svg" fill alt="white bishop" className={styles.whitePiece}/>,
-    "NW": <Image src="/images/knight_white.svg" fill alt="white knight" className={styles.whitePiece}/>,
-    "RW": <Image src="/images/rook_white.svg" fill alt="white rook" className={styles.whitePiece}/>,
-    "QW": <Image src="/images/queen_white.svg" fill alt="white queen" className={styles.whitePiece}/>,
-    "KW": <Image src="/images/king_white.svg" fill alt="white king" className={styles.whitePiece}/>,
-    "pB": <Image src="/images/pawn_black.svg" fill alt="black pawn" className={styles.blackPiece}/>,
-    "BB": <Image src="/images/bishop_black.svg" fill alt="black bishop" className={styles.blackPiece}/>,
-    "NB": <Image src="/images/knight_black.svg" fill alt="black knight" className={styles.blackPiece}/>,
-    "RB": <Image src="/images/rook_black.svg" fill alt="black rook" className={styles.blackPiece}/>,
-    "QB": <Image src="/images/queen_black.svg" fill alt="black queen" className={styles.blackPiece}/>,
-    "KB": <Image src="/images/king_black.svg" fill alt="black king" className={styles.blackPiece}/>,
-    "null": null
+function getIcons(piece: Piece | null) {
+    if(piece == null) return null;
+    const color = piece.color;
+    switch(piece.type) {
+        case 'pawn':
+            return color == Color.White ?
+                <Image src="/images/pawn_white.svg" fill alt="white pawn" className={styles.whitePiece}/> :
+                <Image src="/images/pawn_black.svg" fill alt="black pawn" className={styles.blackPiece}/>;
+            break;
+        case 'bishop':
+            return color == Color.White ?
+                <Image src="/images/bishop_white.svg" fill alt="white bishop" className={styles.whitePiece}/> :
+                <Image src="/images/bishop_black.svg" fill alt="black bishop" className={styles.blackPiece}/>
+            break;
+        case 'knight':
+            return color == Color.White ?
+                <Image src="/images/knight_white.svg" fill alt="white knight" className={styles.whitePiece}/> :
+                <Image src="/images/knight_black.svg" fill alt="black knight" className={styles.blackPiece}/>;
+            break;
+        case 'rook':
+            return color == Color.White ?
+                <Image src="/images/rook_white.svg" fill alt="white rook" className={styles.whitePiece}/> :
+                <Image src="/images/rook_black.svg" fill alt="black rook" className={styles.blackPiece}/>;
+            break;
+        case 'queen':
+            return color == Color.White ?
+                <Image src="/images/queen_white.svg" fill alt="white queen" className={styles.whitePiece}/> :
+                <Image src="/images/queen_black.svg" fill alt="black queen" className={styles.blackPiece}/>;
+        default:
+            return color == Color.White ?
+                <Image src="/images/king_white.svg" fill alt="white king" className={styles.whitePiece}/> :
+                <Image src="/images/king_black.svg" fill alt="black king" className={styles.blackPiece}/>;
+            break;
+    }
 }
 
 function PromotionOptions({ row, onClick }: { row: number, onClick: (piece: Piece) => void }) {
-    const pieces: Piece[] = row === 7 ? ["QW", "RW", "BW", "NW"] : ["QB", "RB", "BB", "NB"];
+    const pieces: Piece[] = [
+        { type: Type.Queen, color: row === 7 ? Color.White: Color.Black, position: { i:0, j:0 } },
+        { type: Type.Rook, color: row === 7 ? Color.White: Color.Black, position: { i:0, j:0 } },
+        { type: Type.Bishop, color: row === 7 ? Color.White: Color.Black, position: { i:0, j:0 } },
+        { type: Type.Knight, color: row === 7 ? Color.White: Color.Black, position: { i:0, j:0 } },
+    ]
 
     return (
         <div className={styles.promotionContainer}>
             {pieces.map((piece) => (
                 <div
-                    key={piece}
+                    key={piece.type}
                     className={styles.promotionOption}
                     onClick={() => {
                         onClick(piece);
                     }}
                 >
-                    {icons[piece]}
+                    {getIcons(piece)}
                 </div>
             ))}
         </div>
@@ -51,405 +69,124 @@ function PromotionOptions({ row, onClick }: { row: number, onClick: (piece: Piec
 }
 
 export default function ChessBoard() {
-    function inBounds(i: number, j: number) {
-        return 0<=i && i<=7 && 0<=j && j<=7
-    }
-
-    function isInBetween(kingI: number, kingJ: number, sqI: number, sqJ: number, attI: number, attJ: number) {
-        const collinear = (sqJ - kingJ) * (attI - kingI) == (attJ - kingJ) * (sqI - kingI);
-        const between =
-            Math.min(kingI, attI) <= sqI &&
-            sqI <= Math.max(kingI, attI) &&
-            Math.min(kingJ, attJ) <= sqJ &&
-            sqJ <= Math.max(kingJ, attJ);
-
-        return collinear && between;
-    }
 
     const [isWhiteToMove, setWhiteToMove] = useState(true);
-    const [isInCheck, setCheck] = useState<number[] | null>(null);
+    const [isInCheck, setCheck] = useState<Pos | null>(null);
     const [isCheckmate, setCheckmate] = useState(false);
-    const [board, setBoard] = useState<(Piece | null)[][]>([
-        ["RW", "NW", "BW", "QW", "KW", "BW", "NW", "RW"],
-        ["pW", "pW", "pW", "pW", "pW", "pW", "pW", "pW"],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        [null, null, null, null, null, null, null, null],
-        ["pB", "pB", "pB", "pB", "pB", "pB", "pB", "pB"],
-        ["RB", "NB", "BB", "QB", "KB", "BB", "NB", "RB"]
-    ]);
-    const [highlight, setHighlight] = useState([-1, -1]);
+    const [boardVal, setBoardVal] = useState<Board>(getInitialBoard());
+    const [highlight, setHighlight] = useState<Pos>({i: -1, j: -1});
 
-    const kingsRef = useRef<Record<Color, number[]>>({ W: [0, 4], B: [7, 4] });
-    const kingsMovedRef = useRef<Record<Color, boolean>>({ W: false, B: false });
+    const board = (pos: Pos) => boardVal[8*pos.i + pos.j];
+
+    const kingsRef = useRef<Record<Color, Piece>>({
+        'white': boardVal[4]!!,
+        'black': boardVal[8*7 + 4]!!
+    });
+    const kingsMovedRef = useRef<Record<Color, boolean>>({ 'white': false, 'black': false });
     const rooksMovedRef = useRef<Record<Color, [boolean, boolean]>>({
-        W: [false, false],
-        B: [false, false],
+        'white': [false, false],
+        'black': [false, false],
     });
 
-    function onSquareClick(rowIndex: number, colIndex: number) {
-        if(board[rowIndex][colIndex] != null) {
-            if (highlight[0] != rowIndex || highlight[1] != colIndex) {
-                if(dottedSquares[rowIndex][colIndex] == true) {
-                    movePiece(highlight[0], highlight[1], rowIndex, colIndex);
-                    setHighlight([-1, -1]);
+    function onSquareClick(pos: Pos) {
+        if(board(pos) != null) {
+            if (highlight.i != pos.i || highlight.j != pos.j) {
+                const move = possibleMoves.find(m => m.to.i == pos.i && m.to.j == pos.j)
+                if(move) {
+                    movePiece(move!!);
+                    setHighlight({i: -1, j: -1});
                     resetPossibleMoves();
-                } else if (board[rowIndex][colIndex].endsWith("W") == isWhiteToMove) {
-                    setHighlight([rowIndex, colIndex]);
-                    getPossibleMoves(rowIndex, colIndex);
+                } else if ((board(pos)?.color == Color.White) == isWhiteToMove) {
+                    setHighlight(pos);
+                    const moves = getPossibleMoves(boardVal, board(pos)!!, isInCheck, kingsRef, kingsMovedRef, rooksMovedRef);
+                    setPossibleMoves(moves);
                 } else {
-                    setHighlight([-1, -1]);
+                    setHighlight({i: -1, j: -1});
                     resetPossibleMoves();
                 }
             }
             else {
-                setHighlight([-1, -1]);
+                setHighlight({i: -1, j: -1});
                 resetPossibleMoves();
             }
         } else {
-            if(dottedSquares[rowIndex][colIndex] == true)
-                movePiece(highlight[0], highlight[1], rowIndex, colIndex);
-            setHighlight([-1, -1]);
+            const move = possibleMoves.find(m => m.to.i == pos.i && m.to.j == pos.j);
+            if(move)
+                movePiece(move);
+            setHighlight({i: -1, j: -1});
             resetPossibleMoves();
         }
     }
 
-    const [dottedSquares, setDottedSquares] = useState(
-        Array.from({ length: 8 }, () => Array(8).fill(false))
-    );
-    const [promotionSqs, setPromotionSqs] = useState(
-        Array.from({ length: 8 }, () => Array(8).fill(false))
-    );
+    const [possibleMoves, setPossibleMoves] = useState<Move[]>([]);
 
     let promotePiece: Piece | null = null;
 
-    function getPossiblePathBRQ(board1: (Piece | null)[][], i: number, j: number, last: Color, moves: number[][], possibleMoves: boolean[][]) {
-        for(const move of moves) {
-            let ii = i+move[0], jj = j+move[1];
-            if(inBounds(ii, jj)) {
-                for (; inBounds(ii, jj) && board1[ii][jj] == null; ii += move[0], jj += move[1]) {
-                    possibleMoves[ii][jj] = true;
-                }
-                if(inBounds(ii, jj))
-                    if (board1[ii][jj]?.endsWith(opp(last)))
-                        possibleMoves[ii][jj] = true;
-            }
-        }
-    }
-
-    function isKingInCheck(board1: (Piece | null)[][], i: number, j: number, color: Color, check: boolean = false) {
-        let movesP = [];
-        if(color == "W") movesP = [[1, -1], [1, 1]];
-        else movesP = [[-1, -1], [-1, 1]];
-        const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
-        const movesBRQ = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
-
-        for (const move of movesP) {
-            const ii = i+move[0], jj = j+move[1];
-            if (inBounds(ii, jj))
-                if (board1[ii][jj]?.startsWith("p") && board1[ii][jj]?.endsWith(opp(color)))
-                    return move;
-        }
-        for (const move of movesN) {
-            const ii = i+move[0], jj = j+move[1];
-            if (inBounds(ii, jj))
-                if (board1[ii][jj]?.startsWith("N") && board1[ii][jj]?.endsWith(opp(color)))
-                    return move;
-        }
-        for(const move of movesBRQ) {
-            let ii = i+move[0], jj = j+move[1];
-            if(inBounds(ii, jj)) {
-                if(!check && board1[ii][jj]?.startsWith("K") && board1[ii][jj]?.endsWith(opp(color)))
-                    return [ii-i, jj-j];
-                for (; inBounds(ii, jj) && (board1[ii][jj]==null || board1[ii][jj] == "K"+color); ii+=move[0], jj+=move[1]);
-                if(inBounds(ii, jj)) {
-                    const ind = movesBRQ.indexOf(move);
-
-                    if (board1[ii][jj]?.startsWith("Q") && board1[ii][jj]?.endsWith(opp(color)))
-                        return [ii-i, jj-j];
-                    if(ind%2 == 0) {
-                        if (board1[ii][jj]?.startsWith("R") && board1[ii][jj]?.endsWith(opp(color)))
-                            return [ii-i, jj-j];
-                    }
-                    else
-                    if (board1[ii][jj]?.startsWith("B") && board1[ii][jj]?.endsWith(opp(color)))
-                        return [ii-i, jj-j];
-                }
-            }
-        }
-        return null;
-    }
-
-    function isCastlingPossible(board1: (Piece | null)[][], i: number, j: number) {
-        let rooks = [], color: Color, cast: (false | number[])[] = [[i, j-2], [i, j+2]];
-        const moves = [-1, 1];
-        if(i==0 && j==4) {
-            rooks = [[0, 0], [0, 7]];
-            color = "W";
-        }
-        else if(i==7 && j==4) {
-            rooks = [[7, 0], [7, 7]];
-            color = "B";
-        }
-        else return [false, false];
-
-        for(let k=0; k<=1; k++) {
-            if(!rooksMovedRef.current[color][k] && !kingsMovedRef.current[color]) {
-                for(let jj=j; jj!=rooks[k][1] && cast[k] != false; jj+=moves[k]) {
-                    if((board1[i][jj] != null && jj!=4 && jj!=0 && jj!= 7) || isKingInCheck(board1, i, jj, color))
-                        cast[k] = false;
-                }
-            } else return [false, false];
-        }
-        return cast;
-    }
-
-    function getPossibleMoves(i: number, j: number) {
-        let possibleMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
-        let promotionMoves = Array.from({ length: 8 }, () => Array(8).fill(false));
-        const last = board[i][j]?.charAt(1) as Color;
-
-        switch (board[i][j]) {
-            case "pW":
-                if(!board[i+1][j]) {
-                    possibleMoves[i+1][j] = true;
-                    if(i+1==7)
-                        promotionMoves[i+1][j] = true;
-                    if(i==1 && !board[i+2][j])
-                        possibleMoves[i+2][j] = true;
-                }
-                if(board[i+1][j+1] != null && board[i+1][j+1]?.endsWith("B")) {
-                    possibleMoves[i+1][j+1] = true;
-                    if(i+1==7)
-                        promotionMoves[i+1][j+1] = true;
-                }
-                if(board[i+1][j-1] != null && board[i+1][j-1]?.endsWith("B")) {
-                    possibleMoves[i+1][j-1] = true;
-                    if(i+1==7)
-                        promotionMoves[i+1][j-1] = true;
-                }
-                setPromotionSqs(promotionMoves);
-                break;
-            case "pB":
-                if(!board[i-1][j]) {
-                    possibleMoves[i-1][j] = true;
-                    if(i-1==0)
-                        promotionMoves[i-1][j] = true;
-                    if(i==6 && !board[i-2][j])
-                        possibleMoves[i-2][j] = true;
-                }
-                if(board[i-1][j+1] != null && board[i-1][j+1]?.endsWith("W")) {
-                    possibleMoves[i-1][j+1] = true;
-                    if(i-1==0)
-                        promotionMoves[i-1][j+1] = true;
-                }
-                if(board[i-1][j-1] != null && board[i-1][j-1]?.endsWith("W")) {
-                    possibleMoves[i-1][j-1] = true;
-                    if(i-1==0)
-                        promotionMoves[i-1][j-1] = true;
-                }
-                setPromotionSqs(promotionMoves);
-                break;
-            case "NW":
-            case "NB":
-                const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
-                for(const move of movesN) {
-                    const ii = i+move[0], jj = j+move[1];
-                    if(inBounds(ii, jj)) {
-                        if (board[ii][jj] == null) possibleMoves[ii][jj] = true;
-                        else if (board[ii][jj].endsWith(opp(last))) possibleMoves[ii][jj] = true;
-                    }
-                }
-                break;
-            case "BW":
-            case "BB":
-                const movesB = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
-                getPossiblePathBRQ(board, i, j, last, movesB, possibleMoves);
-                break;
-            case "RW":
-            case "RB":
-                const movesR = [[-1, 0], [0, 1], [1, 0], [0, -1]];
-                getPossiblePathBRQ(board, i, j, last, movesR, possibleMoves);
-                break;
-            case "QW":
-            case "QB":
-                const movesQ = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
-                getPossiblePathBRQ(board, i, j, last, movesQ, possibleMoves);
-                break;
-            case "KW":
-            case "KB":
-                const movesK = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
-                for(const move of movesK) {
-                    const ii = i+move[0], jj = j+move[1];
-                    if(inBounds(ii, jj)) {
-                        if(board[ii][jj] == null) {
-                            if (!isKingInCheck(board, ii, jj, last))
-                                possibleMoves[ii][jj] = true;
-                        }
-                        else if(board[ii][jj].endsWith(opp(last)))
-                            if(!isKingInCheck(board, ii, jj, last))
-                                possibleMoves[ii][jj] = true;
-                    }
-                }
-
-                // Castling
-                const castling = isCastlingPossible(board, i, j);
-                for(let k=0; k<=1; k++)
-                    if(castling[k] != false) {
-                        const cast = castling[k] as number[];
-                        possibleMoves[cast[0]][cast[1]] = true;
-                    }
-
-                break;
-        }
-
-        //Blocking check (if the piece is not a king)
-        if(isInCheck && board[i][j] != "KW" && board[i][j] != "KB") {
-            let king = kingsRef.current[last];
-
-            const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
-            if(!movesN.find(elem => elem[0]==isInCheck[0] && elem[1]==isInCheck[1])) { //You cannot block a check from a knight
-                for(let i=0; i<=7; i++) {
-                    for(let j=0; j<=7; j++) {
-                        if(possibleMoves[i][j] != false && !isInBetween(king[0], king[1], i, j, king[0] + isInCheck[0], king[1] + isInCheck[1]))
-                            possibleMoves[i][j] = false;
-                    }
-                }
-            } else {
-                // If check is from knight
-                const ii = king[0] + isInCheck[0], jj = king[1] + isInCheck[1]
-                if(possibleMoves[ii][jj] == true) {
-                    //If you can capture the knight, that is the only possible move
-                    possibleMoves = Array.from({length: 8}, () => Array(8).fill(false));
-                    possibleMoves[ii][jj] = true;
-                } else //If you can't, you can't move!
-                    possibleMoves = Array.from({length: 8}, () => Array(8).fill(false));
-            }
-        }
-
-        // Check if piece is pinned
-        if(board[i][j] != "KW" && board[i][j] != "KB") {
-            const king = kingsRef.current[last];
-
-            for(let ii=0; ii<=7; ii++)
-                for(let jj=0; jj<=7; jj++)
-                    if(possibleMoves[ii][jj]) {
-                        const newBoard = board.map(r => [...r]);
-                        newBoard[ii][jj] = board[i][j];
-                        newBoard[i][j] = null;
-                        if(isKingInCheck(newBoard, king[0], king[1], last))
-                            possibleMoves[ii][jj] = false;
-                    }
-        }
-
-        setDottedSquares(possibleMoves);
-    }
-
     function resetPossibleMoves() {
-        setDottedSquares(Array.from({ length: 8 }, () => Array(8).fill(false)));
-        setPromotionSqs(Array.from({ length: 8 }, () => Array(8).fill(false)));
+        setPossibleMoves([]);
     }
 
-    function isInCheckmate(testBoard: (Piece | null)[][], check: number[], kColor: Color) {
-        const i = kingsRef.current[kColor][0], j = kingsRef.current[kColor][1];
-
-        const movesK = [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]];
-        for(const move of movesK) {
-            const ii = i+move[0], jj = j+move[1];
-            if(inBounds(ii, jj)) {
-                if(testBoard[ii][jj] == null) {
-                    if(!isKingInCheck(testBoard, ii, jj, kColor))
-                        return false;
-                }
-                else if(testBoard[ii][jj].endsWith(opp(kColor)))
-                    if(!isKingInCheck(testBoard, ii, jj, kColor))
-                        return false;
-            }
-        }
-
-        const movesN = [[-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1]];
-        if(movesN.find(elem => elem[0]==check[0] && elem[1]==check[1])) {
-            const ii = i+check[0], jj = j+check[1];
-            if(isKingInCheck(testBoard, ii, jj, opp(kColor), true))
-                return false;
-        } else {
-            const div = Math.max(Math.abs(check[0]), Math.abs(check[1]));
-            const move = [check[0]/div, check[1]/div];
-            let movePi = -1;
-            if(kColor == "B") movePi = 1;
-            let ii = i+move[0], jj = j+move[1];
-
-            for(; Math.abs(ii-i) <= Math.abs(check[0]) && Math.abs(jj-j) <= Math.abs(check[1]); ii+=move[0], jj+=move[1]) {
-                if(isKingInCheck(testBoard, ii, jj, opp(kColor), true))
-                    return false;
-                let iip = ii+movePi;
-                for(let a=1; a<=2 && 0<=iip && iip<=7; a++, iip+=movePi) {
-                    if(testBoard[iip][jj]?.toString().startsWith('p'))
-                        return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    function movePiece(i1: number, j1: number, i2: number, j2: number) {
+    function movePiece(move: Move) {
         setCheck(null);
-        const newBoard = board.map(r => [...r]);
-
-        // Update kings and castling
-        if(board[i1][j1]?.startsWith('K')) {
-            if (board[i1][j1] == "KW") {
-                kingsRef.current["W"] = [i2, j2];
-                if (!kingsMovedRef.current["W"]) kingsMovedRef.current["W"] = true;
-            } else if (board[i1][j1] == "KB") {
-                kingsRef.current["B"] = [i2, j2];
-                if (!kingsMovedRef.current["B"]) kingsMovedRef.current["B"] = true;
-            }
-            if (j2 - j1 == 2) {
-                newBoard[i2][5] = newBoard[i2][7];
-                newBoard[i2][7] = null;
-            } else if (j2 - j1 == -2) {
-                newBoard[i2][3] = newBoard[i2][0];
-                newBoard[i2][0] = null;
-            }
-        }
+        const newBoardVal = [...boardVal];
+        const newBoard = (pos: Pos) => newBoardVal[8*pos.i + pos.j];
+        const pos = (i: number, j: number) => ({ i, j } as Pos);
 
         // Pawn promotion and piece movement
-        if(board[i1][j1] == "pW" && i2 == 7)
-            newBoard[i2][j2] = promotePiece;
-        else if(board[i1][j1] == "pB" && i2 == 0)
-            newBoard[i2][j2] = promotePiece;
-        else newBoard[i2][j2] = newBoard[i1][j1];
-        newBoard[i1][j1] = null;
+        if(board(move.from)?.type == Type.Pawn && board(move.from)?.color == Color.White && move.to.i == 7)
+            newBoardVal[8*move.to.i + move.to.j] = { ...promotePiece!!, position: move.to, lastPosition: move.from };
+        else if(board(move.from)?.type == Type.Pawn && board(move.from)?.color == Color.Black && move.to.i == 0)
+            newBoardVal[8*move.to.i + move.to.j] = { ...promotePiece!!, position: move.to, lastPosition: move.from };
+        else {
+            const piece = board(move.from)!!;
+            newBoardVal[8*move.to.i + move.to.j] = { ...piece, position: move.to, lastPosition: move.from };
+        }
+        newBoardVal[8*move.from.i + move.from.j] = null;
+
+        // Update kings and castling
+        if(board(move.from)?.type == Type.King) {
+            const newKing: Piece = newBoard(move.to)!!;
+            kingsRef.current[newKing.color] = newKing;
+            if(!kingsMovedRef.current[newKing.color]) kingsMovedRef.current[newKing.color] = true;
+
+            if (move.to.j - move.from.j == 2) {
+                const rook = newBoard(pos(move.to.i, 7));
+                newBoardVal[8*move.to.i + 5] = { ...rook!!, position: pos(move.to.i, 5), lastPosition: pos(move.to.i, 7) };
+                newBoardVal[8*move.to.i + 7] = null;
+            } else if (move.to.j - move.from.j == -2) {
+                const rook = newBoard(pos(move.to.i, 0));
+                newBoardVal[8*move.to.i + 3] = { ...rook!!, position: pos(move.to.i, 3), lastPosition: pos(move.to.i, 0) };
+                newBoardVal[8*move.to.i + 0] = null;
+            }
+        }
 
         // Update rooks movement
-        if(board[i1][j1] == "RW") {
-            if(i1==0 && j1==0 && !rooksMovedRef.current["W"][0])
-                rooksMovedRef.current["W"][0] = true;
-            else if(i1==0 && j1==7 && !rooksMovedRef.current["W"][1])
-                rooksMovedRef.current["W"][1] = true;
-        } else if(board[i1][j1] == "RB") {
-            if(i1==7 && j1==0 && !rooksMovedRef.current["B"][0])
-                rooksMovedRef.current["B"][0] = true;
-            else if(i1==7 && j1==7 && !rooksMovedRef.current["B"][1])
-                rooksMovedRef.current["B"][1] = true;
+        if(board(move.from)?.type == Type.Rook) {
+            const color = board(move.from)?.color!!;
+            if(move.from.i==0 && move.from.j==0 && !rooksMovedRef.current[color][0])
+                rooksMovedRef.current[color][0] = true;
+            else if(move.from.i==0 && move.from.j==7 && !rooksMovedRef.current[color][1])
+                rooksMovedRef.current[color][1] = true;
+            else if(move.from.i==7 && move.from.j==0 && !rooksMovedRef.current[color][0])
+                rooksMovedRef.current[color][0] = true;
+            else if(move.from.i==7 && move.from.j==7 && !rooksMovedRef.current[color][1])
+                rooksMovedRef.current[color][1] = true;
         }
 
         // Update board
-        setBoard(newBoard);
+        setBoardVal(newBoardVal);
         setWhiteToMove(!isWhiteToMove);
 
-        const checkW = isKingInCheck(newBoard, kingsRef.current["W"][0], kingsRef.current["W"][1], "W");
-        const checkB = isKingInCheck(newBoard, kingsRef.current["B"][0], kingsRef.current["B"][1], "B");
+        const checkW = isKingInCheck(newBoardVal, kingsRef.current[Color.White]);
+        const checkB = isKingInCheck(newBoardVal, kingsRef.current[Color.Black]);
         if(checkW) {
             setCheck(checkW);
-            if(isInCheckmate(newBoard, checkW, "W"))
+            if(isInCheckmate(newBoardVal, checkW, kingsRef.current[Color.White]))
                 setCheckmate(true);
         }
         else if(checkB) {
             setCheck(checkB);
-            if(isInCheckmate(newBoard, checkB, "B"))
+            if(isInCheckmate(newBoardVal, checkB, kingsRef.current[Color.Black]))
                 setCheckmate(true);
         }
     }
@@ -468,76 +205,40 @@ export default function ChessBoard() {
                 ))}
             </div>
             <div className={styles.chessBoard}>
-                {board.map((row, rowI) =>
-                    row.map((col, colI) => {
-                        const rowIndex = 7-rowI;
-                        const colIndex = colI;
+                {boardVal.map((piece, i) => {
+                    const displayRow = Math.floor(i / 8);
+                    const displayCol = i % 8;
+                    const pos: Pos = { i: 7 - displayRow, j: displayCol };
+                    const rowIndex = pos.i, colIndex = pos.j;
+                    const move = possibleMoves.find(m => m.to.i == pos.i && m.to.j == pos.j);
 
-                        if((rowIndex + colIndex)%2 == 0)
-                            return (
-                                <div
-                                    role="button"
-                                    onClick={() => {
-                                        if(!promotionSqs[rowIndex][colIndex])
-                                            onSquareClick(rowIndex, colIndex)
-                                    }}
-                                    key={`${rowIndex}-${colIndex}`}
-                                    className={
-                                        (highlight[0] == rowIndex && highlight[1] == colIndex)
-                                            ? styles.highlightedBlackSquare
-                                            : (dottedSquares[rowIndex][colIndex] == true && icons[board[rowIndex][colIndex] ?? "null"])
-                                                ? styles.capSquare
-                                                : styles.blackSquare
-                                    }
-                                >
-                                    {icons[board[rowIndex][colIndex] ?? "null"]}
-                                    {dottedSquares[rowIndex][colIndex] == true && (
-                                        promotionSqs[rowIndex][colIndex] ? (
-                                            <Popover
-                                                content={
-                                                    <PromotionOptions
-                                                        row={rowIndex}
-                                                        onClick={(piece: Piece) => {
-                                                            promotePiece = piece;
-                                                            onSquareClick(rowIndex, colIndex);
-                                                        }}
-                                                    />
-                                                }
-                                                translateX="-90%"
-                                            >
-                                                <div className={styles.dot}/>
-                                            </Popover>
-                                        ) : <div className={styles.dot}/>
-                                    )}
-                                </div>
-
-                            );
-                        else return (
+                    if((rowIndex + colIndex)%2 == 0)
+                        return (
                             <div
                                 role="button"
                                 onClick={() => {
-                                    if(!promotionSqs[rowIndex][colIndex])
-                                        onSquareClick(rowIndex, colIndex)
+                                    if (!move?.promotion)
+                                        onSquareClick(pos)
                                 }}
                                 key={`${rowIndex}-${colIndex}`}
                                 className={
-                                    (highlight[0] == rowIndex && highlight[1] == colIndex)
-                                        ? styles.highlightedWhiteSquare
-                                        : (dottedSquares[rowIndex][colIndex] == true && icons[board[rowIndex][colIndex] ?? "null"])
+                                    (highlight.i == rowIndex && highlight.j == colIndex)
+                                        ? styles.highlightedBlackSquare
+                                        : (move && getIcons(board(pos)))
                                             ? styles.capSquare
-                                            : styles.whiteSquare
+                                            : styles.blackSquare
                                 }
                             >
-                                {icons[board[rowIndex][colIndex] ?? "null"]}
-                                {dottedSquares[rowIndex][colIndex] == true && (
-                                    promotionSqs[rowIndex][colIndex] ? (
+                                {getIcons(board(pos))}
+                                {move && (
+                                    move.promotion ? (
                                         <Popover
                                             content={
                                                 <PromotionOptions
                                                     row={rowIndex}
                                                     onClick={(piece: Piece) => {
                                                         promotePiece = piece;
-                                                        onSquareClick(rowIndex, colIndex);
+                                                        onSquareClick(pos);
                                                     }}
                                                 />
                                             }
@@ -548,9 +249,46 @@ export default function ChessBoard() {
                                     ) : <div className={styles.dot}/>
                                 )}
                             </div>
+
                         );
-                    })
-                )}
+                    else return (
+                        <div
+                            role="button"
+                            onClick={() => {
+                                if (!move?.promotion)
+                                    onSquareClick(pos)
+                            }}
+                            key={`${rowIndex}-${colIndex}`}
+                            className={
+                                (highlight.i == rowIndex && highlight.j == colIndex)
+                                    ? styles.highlightedWhiteSquare
+                                    : (move && getIcons(board(pos)))
+                                        ? styles.capSquare
+                                        : styles.whiteSquare
+                            }
+                        >
+                            {getIcons(board(pos))}
+                            {move && (
+                                move.promotion ? (
+                                    <Popover
+                                        content={
+                                            <PromotionOptions
+                                                row={rowIndex}
+                                                onClick={(piece: Piece) => {
+                                                    promotePiece = piece;
+                                                    onSquareClick(pos);
+                                                }}
+                                            />
+                                        }
+                                        translateX="-90%"
+                                    >
+                                        <div className={styles.dot}/>
+                                    </Popover>
+                                ) : <div className={styles.dot}/>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
             <span style={{ alignSelf: "center", paddingTop: "32px", fontSize: "20px" }}>
                 <b>
