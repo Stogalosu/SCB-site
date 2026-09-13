@@ -1,4 +1,4 @@
-import { Type, Color, Pos, Piece, Move, Board } from "@/types";
+import {Board, Color, Move, Piece, Pos, Type} from "@/types";
 
 const p = (i: number, j: number) => ({ i, j });
 
@@ -99,7 +99,7 @@ function getPossiblePathBRQ(board: Board, piece: Piece, possibleMoves: Move[]) {
                         piece,
                         from: pos,
                         to: poss,
-                        captured: board[8*poss.i + poss.j] ?? piece
+                        captured: board[8*poss.i + poss.j]!!
                     });
         }
     }
@@ -108,11 +108,11 @@ function getPossiblePathBRQ(board: Board, piece: Piece, possibleMoves: Move[]) {
 export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = false): Pos | null {
     const board = (pos: Pos) => boardVal[8*pos.i + pos.j];
 
-    const movesP = getPieceMoves(Type.Pawn, piece.color) ;
+    const movesP = getPieceMoves(Type.Pawn, piece.color);
     const movesN = getPieceMoves(Type.Knight);
     const movesBRQ = getPieceMoves(Type.Queen);
     const pos = piece.position;
-    const color = piece.color
+    const color = piece.color;
 
     for (const move of movesP) {
         const poss = { i: pos.i+move[0], j: pos.j+move[1] };
@@ -130,7 +130,7 @@ export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = fa
         let poss = { i: pos.i+move[0], j: pos.j+move[1] };
         if(inBounds(poss)) {
             if(!check && board(poss)?.type == Type.King && board(poss)?.color != color)
-                return { i: poss.i-pos.i, j: poss.i-pos.i };
+                return { i: poss.i-pos.i, j: poss.j-pos.j };
             for (;
                 inBounds(poss) &&
                 (board(poss)==null ||
@@ -142,14 +142,13 @@ export function isKingInCheck(boardVal: Board, piece: Piece, check: boolean = fa
                 const ind = movesBRQ.indexOf(move);
 
                 if (board(poss)?.type == Type.Queen && board(poss)?.color != color)
-                    return { i: poss.i-pos.i, j: poss.i-pos.i };
+                    return { i: poss.i-pos.i, j: poss.j-pos.j };
                 if(ind%2 == 0) {
                     if (board(poss)?.type == Type.Rook && board(poss)?.color != color)
-                        return { i: poss.i-pos.i, j: poss.i-pos.i };
+                        return { i: poss.i-pos.i, j: poss.j-pos.j };
                 }
-                else
-                if (board(poss)?.type == Type.Bishop && board(poss)?.color != color)
-                    return { i: poss.i-pos.i, j: poss.i-pos.i };
+                else if (board(poss)?.type == Type.Bishop && board(poss)?.color != color)
+                    return { i: poss.i-pos.i, j: poss.j-pos.j };
             }
         }
     }
@@ -177,8 +176,8 @@ export function isCastlingPossible(
     for(let k=0; k<=1; k++) {
         if(!rooksMovedRef.current[color][k] && !kingsMovedRef.current[color]) {
             let cast = true
-            for(let poss={ i: pos.i, j: pos.j }; poss.j != rooks[k].j && cast; pos.j+=moves[k])
-                if((board(poss) != null && poss.j!=4 && poss.j!=0 && poss.j!= 7) || isKingInCheck(boardVal, piece))
+            for(let poss={ i: pos.i, j: pos.j }; poss.j != rooks[k].j && cast; poss = { i: poss.i, j: poss.j + moves[k] })
+                if((board(poss) != null && poss.j!=4 && poss.j!=0 && poss.j!= 7) || isKingInCheck(boardVal, { ...piece, position: poss }))
                     cast = false;
             if(cast)
                 castling.push({
@@ -187,7 +186,7 @@ export function isCastlingPossible(
                     to: to[k],
                     isCastle: true
                 });
-        } else return [];
+        }
     }
     return castling;
 }
@@ -265,12 +264,15 @@ export function getPossibleMoves(
                 const poss = { i: i+move[0], j: j+move[1] };
                 if(inBounds(poss)) {
                     if(board(poss) == null) {
-                        if (!isKingInCheck(boardVal, piece))
+                        const tempKing: Piece = { ...piece, position: poss };
+                        if (!isKingInCheck(boardVal, tempKing))
                             moves.push({piece, from: pos, to: poss});
                     }
-                    else if(board(poss)?.color != color)
-                        if(!isKingInCheck(boardVal, piece))
+                    else if(board(poss)?.color != color) {
+                        const tempKing: Piece = { ...piece, position: poss };
+                        if(!isKingInCheck(boardVal, tempKing))
                             moves.push({piece, from: pos, to: poss, captured: board(poss) ?? undefined});
+                    }
                 }
             }
 
@@ -289,7 +291,7 @@ export function getPossibleMoves(
 
         const movesN = getPieceMoves(Type.Knight);
         const isKnightCheck = movesN.find(elem => elem[0]==isInCheck.i && elem[1]==isInCheck.j)
-        if(!isInCheck) //You cannot block a check from a knight
+        if(!isKnightCheck) //You cannot block a check from a knight
             tempMoves = moves.filter(move => isInBetween(kingPos, move.to, attPos));
         else
             // If check is from knight, the only legal move is to capture it
@@ -333,6 +335,7 @@ export function isInCheckmate(boardVal: Board, check: Pos, king: Piece) {
                     return false;
         }
     }
+    console.log('1');
 
     const movesN = getPieceMoves(Type.Knight);
     const isKnightCheck = movesN.find(elem => elem[0]==check.i && elem[1]==check.j);
@@ -346,19 +349,20 @@ export function isInCheckmate(boardVal: Board, check: Pos, king: Piece) {
         };
         if(isKingInCheck(boardVal, tempKing, true))
             return false;
+        console.log('2');
     } else {
         const div = Math.max(Math.abs(check.i), Math.abs(check.j));
         const move: Pos = { i: check.i/div, j: check.j/div };
         const movePi = color == Color.White ? -1 : 1;
-        const poss = { i: i+move.i, j: j+move.j };
-        const tempKing: Piece = {
-            type: king.type,
-            color: color==Color.White ? Color.Black : Color.White,
-            position: poss,
-            lastPosition: king.lastPosition
-        };
+        let poss = { i: i+move.i, j: j+move.j };
 
-        for(; Math.abs(poss.i-i) <= Math.abs(check.i) && Math.abs(poss.j-j) <= Math.abs(check.i); poss.i += move.i, poss.j += move.j) {
+        for(; Math.abs(poss.i-i) <= Math.abs(check.i) && Math.abs(poss.j-j) <= Math.abs(check.j); poss.i += move.i, poss.j += move.j) {
+            const tempKing: Piece = {
+                type: king.type,
+                color: color==Color.White ? Color.Black : Color.White,
+                position: poss,
+                lastPosition: king.lastPosition
+            };
             if(isKingInCheck(boardVal, tempKing, true))
                 return false;
             let posP = { i: poss.i+movePi, j: poss.j };
@@ -367,6 +371,7 @@ export function isInCheckmate(boardVal: Board, check: Pos, king: Piece) {
                     return false;
             }
         }
+        console.log('3');
     }
     return true;
 }

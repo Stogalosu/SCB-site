@@ -8,7 +8,7 @@ import { getInitialBoard, getPossibleMoves, isKingInCheck, isInCheckmate } from 
 import { Type, Color, Pos, Piece, Move, Board } from "@/types";
 
 function getIcons(piece: Piece | null) {
-    if(piece == null) return <></>;
+    if(piece == null) return null;
     const color = piece.color;
     switch(piece.type) {
         case 'pawn':
@@ -88,13 +88,6 @@ export default function ChessBoard() {
         'black': [false, false],
     });
 
-    function getDottedSquares(moves: Move[]) {
-        let squares: boolean[][] = Array.from({ length: 8 }, () => Array(8).fill(false));
-        for(const move of moves)
-            squares[move.to.i][move.to.j] = true;
-        return squares
-    }
-
     function onSquareClick(pos: Pos) {
         if(board(pos) != null) {
             if (highlight.i != pos.i || highlight.j != pos.j) {
@@ -152,15 +145,17 @@ export default function ChessBoard() {
 
         // Update kings and castling
         if(board(move.from)?.type == Type.King) {
-            const king: Piece = board(move.from)!!;
-            kingsRef.current[king.color] = king;
-            if(!kingsMovedRef.current[king.color]) kingsMovedRef.current[king.color] = true;
+            const newKing: Piece = newBoard(move.to)!!;
+            kingsRef.current[newKing.color] = newKing;
+            if(!kingsMovedRef.current[newKing.color]) kingsMovedRef.current[newKing.color] = true;
 
             if (move.to.j - move.from.j == 2) {
-                newBoardVal[8*move.to.i + 5] = newBoard(pos(move.to.i, 7));
+                const rook = newBoard(pos(move.to.i, 7));
+                newBoardVal[8*move.to.i + 5] = { ...rook!!, position: pos(move.to.i, 5), lastPosition: pos(move.to.i, 7) };
                 newBoardVal[8*move.to.i + 7] = null;
             } else if (move.to.j - move.from.j == -2) {
-                newBoardVal[8*move.to.i + 3] = newBoard(pos(move.to.i, 0));
+                const rook = newBoard(pos(move.to.i, 0));
+                newBoardVal[8*move.to.i + 3] = { ...rook!!, position: pos(move.to.i, 3), lastPosition: pos(move.to.i, 0) };
                 newBoardVal[8*move.to.i + 0] = null;
             }
         }
@@ -183,7 +178,7 @@ export default function ChessBoard() {
         setWhiteToMove(!isWhiteToMove);
 
         const checkW = isKingInCheck(newBoardVal, kingsRef.current[Color.White]);
-        const checkB = isKingInCheck(newBoardVal, kingsRef.current[Color.White]);
+        const checkB = isKingInCheck(newBoardVal, kingsRef.current[Color.Black]);
         if(checkW) {
             setCheck(checkW);
             if(isInCheckmate(newBoardVal, checkW, kingsRef.current[Color.White]))
@@ -211,9 +206,10 @@ export default function ChessBoard() {
             </div>
             <div className={styles.chessBoard}>
                 {boardVal.map((piece, i) => {
-                    const colIndex = i/8;
-                    const rowIndex = 7-(i - 8*colIndex);
-                    const pos = { i: 7-rowIndex, j: colIndex };
+                    const displayRow = Math.floor(i / 8);
+                    const displayCol = i % 8;
+                    const pos: Pos = { i: 7 - displayRow, j: displayCol };
+                    const rowIndex = pos.i, colIndex = pos.j;
                     const move = possibleMoves.find(m => m.to.i == pos.i && m.to.j == pos.j);
 
                     if((rowIndex + colIndex)%2 == 0)
